@@ -116,7 +116,7 @@ void Decoder::StartProcessorTrace(lldb::SBProcess &sbprocess,
 
   std::size_t pos =
       trace_tech_value.find((const char *)string_value, 0, bytes_written);
-  if ((pos == std::string::npos)) {
+  if (pos == std::string::npos) {
     sberror.SetErrorStringWithFormat(
         "key \"%s\" not set to \"%s\" in custom trace parameters",
         trace_tech_key, trace_tech_value.c_str());

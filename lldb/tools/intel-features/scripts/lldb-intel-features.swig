@@ -2,7 +2,7 @@
 
 %{
 #include "lldb/lldb-public.h"
-#include "intel-pt/PTDecoder.h"
+#include "intel-pt/trace/PTDecoder.h"
 using namespace ptdecoder;
 %}
 

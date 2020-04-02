@@ -20,12 +20,15 @@ if (NOT LIBIPT_LIBRARY)
   message (FATAL_ERROR "libipt library not found")
 endif()
 
+add_subdirectory(trace)
+add_subdirectory(commands)
+
 add_lldb_library(lldbIntelPT
-  PTDecoder.cpp
-  Decoder.cpp
   cli-wrapper-pt.cpp
 
   LINK_LIBS
     ${LIBIPT_LIBRARY}
     liblldb
-  )
+    lldbIntelPTTrace
+    lldbIntelPTCommands
+)
