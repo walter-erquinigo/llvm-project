@@ -7,4 +7,4 @@
 
 %include "lldb/API/SBDefines.h"
 
-%include "../trace/PTDecoder.h"
+%include "../trace/PTManager.h"

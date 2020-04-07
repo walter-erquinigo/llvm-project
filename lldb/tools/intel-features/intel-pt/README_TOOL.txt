@@ -106,9 +106,9 @@ The Tool currently works successfully with following versions of this library:
 ============
 How to Use
 ============
-The Tool's API are exposed as a C++ object oriented interface (file PTDecoder.h)
+The Tool's API are exposed as a C++ object oriented interface (file PTManager.h)
 in a shared library. The main class that implements the whole functionality is
-PTDecoder. This class makes use of 3 other classes,
+PTManager. This class makes use of 3 other classes,
  - PTInstruction to represent an assembly instruction
  - PTInstructionList to return instruction log
  - PTTraceOptions to return trace specific information
@@ -123,7 +123,7 @@ LLDB's command line. Please refer to README_CLI.txt file for command line usage.
 
 A brief introduction about the classes and their API are given below.
 
-  class PTDecoder
+  class PTManager
   ===============
     This class makes use of Intel(R) Processor Trace hardware feature
     (implemented inside LLDB) to gather trace data for an inferior (being
@@ -296,7 +296,7 @@ A brief introduction about the classes and their API are given below.
       This class represents an assembly instruction containing raw instruction
       bytes, instruction address along with execution flow context and
       Intel(R) Processor Trace context. For more details, please refer to
-      PTDecoder.h file.
+      PTManager.h file.
 
   class PTInstructionList
   =======================
@@ -308,4 +308,4 @@ A brief introduction about the classes and their API are given below.
       This class provides Intel(R) Processor Trace specific configuration
       options like trace type, trace buffer size, meta data buffer size along
       with other trace specific options. For more details, please refer to
-      PTDecoder.h file.
+      PTManager.h file.

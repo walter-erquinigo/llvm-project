@@ -1,4 +1,4 @@
-//===-- PTDecoder.cpp -------------------------------------------*- C++ -*-===//
+//===-- PTManager.cpp -------------------------------------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PTDecoder.h"
+#include "PTManager.h"
 #include "Decoder.h"
 
 using namespace ptdecoder;
@@ -85,38 +85,38 @@ void PTTraceOptions::SetSP(
   m_opaque_sp = ptr;
 }
 
-// PTDecoder class member functions definitions
-PTDecoder::PTDecoder(lldb::SBDebugger &sbdebugger)
+// PTManager class member functions definitions
+PTManager::PTManager(lldb::SBDebugger &sbdebugger)
     : m_opaque_sp(new ptdecoder_private::Decoder(sbdebugger)) {}
 
-void PTDecoder::StartProcessorTrace(lldb::SBProcess &sbprocess,
+void PTManager::StartProcessorTrace(lldb::SBProcess &sbprocess,
                                     lldb::SBTraceOptions &sbtraceoptions,
                                     lldb::SBError &sberror) {
   if (m_opaque_sp == nullptr) {
-    sberror.SetErrorStringWithFormat("invalid PTDecoder instance");
+    sberror.SetErrorStringWithFormat("invalid PTManager instance");
     return;
   }
 
   m_opaque_sp->StartProcessorTrace(sbprocess, sbtraceoptions, sberror);
 }
 
-void PTDecoder::StopProcessorTrace(lldb::SBProcess &sbprocess,
+void PTManager::StopProcessorTrace(lldb::SBProcess &sbprocess,
                                    lldb::SBError &sberror, lldb::tid_t tid) {
   if (m_opaque_sp == nullptr) {
-    sberror.SetErrorStringWithFormat("invalid PTDecoder instance");
+    sberror.SetErrorStringWithFormat("invalid PTManager instance");
     return;
   }
 
   m_opaque_sp->StopProcessorTrace(sbprocess, sberror, tid);
 }
 
-void PTDecoder::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,
+void PTManager::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,
                                           lldb::tid_t tid, uint32_t offset,
                                           uint32_t count,
                                           PTInstructionList &result_list,
                                           lldb::SBError &sberror) {
   if (m_opaque_sp == nullptr) {
-    sberror.SetErrorStringWithFormat("invalid PTDecoder instance");
+    sberror.SetErrorStringWithFormat("invalid PTManager instance");
     return;
   }
 
@@ -130,11 +130,11 @@ void PTDecoder::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,
   result_list.SetSP(insn_list_ptr);
 }
 
-void PTDecoder::GetProcessorTraceInfo(lldb::SBProcess &sbprocess,
+void PTManager::GetProcessorTraceInfo(lldb::SBProcess &sbprocess,
                                       lldb::tid_t tid, PTTraceOptions &options,
                                       lldb::SBError &sberror) {
   if (m_opaque_sp == nullptr) {
-    sberror.SetErrorStringWithFormat("invalid PTDecoder instance");
+    sberror.SetErrorStringWithFormat("invalid PTManager instance");
     return;
   }
 

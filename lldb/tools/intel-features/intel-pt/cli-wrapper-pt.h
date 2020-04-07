@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// CLI Wrapper of PTDecoder Tool to enable it to be used through LLDB's CLI.
+// CLI Wrapper of PTManager Tool to enable it to be used through LLDB's CLI.
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBDebugger.h"

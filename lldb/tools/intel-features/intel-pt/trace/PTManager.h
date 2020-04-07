@@ -1,4 +1,4 @@
-//===-- PTDecoder.h ---------------------------------------------*- C++ -*-===//
+//===-- PTManager.h ---------------------------------------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PTDecoder_h_
-#define PTDecoder_h_
+#ifndef PTManager_h_
+#define PTManager_h_
 
 // C/C++ Includes
 #include <vector>
@@ -89,7 +89,7 @@ public:
   void Clear();
 
 private:
-  friend class PTDecoder;
+  friend class PTManager;
 
   void SetSP(const std::shared_ptr<ptdecoder_private::InstructionList> &ptr);
 
@@ -119,14 +119,14 @@ public:
   lldb::SBStructuredData GetTraceParams(lldb::SBError &error);
 
 private:
-  friend class PTDecoder;
+  friend class PTManager;
 
   void SetSP(const std::shared_ptr<ptdecoder_private::TraceOptions> &ptr);
 
   std::shared_ptr<ptdecoder_private::TraceOptions> m_opaque_sp;
 };
 
-/// \class PTDecoder
+/// \class PTManager
 /// This class makes use of Intel(R) Processor Trace hardware feature
 ///     (implememted inside LLDB) to gather trace data for an inferior (being
 ///     debugged with LLDB) to provide meaningful information out of it.
@@ -138,9 +138,9 @@ private:
 ///     - stop the trace for a thread/process,
 ///     - get the execution flow (assembly instructions) for a thread and
 ///     - get trace specific information for a thread
-class PTDecoder {
+class PTManager {
 public:
-  PTDecoder(lldb::SBDebugger &sbdebugger);
+  PTManager(lldb::SBDebugger &sbdebugger);
 
   /// Start Intel(R) Processor Trace on a thread or complete process with
   /// Intel(R) Processor Trace specific configuration options
@@ -267,4 +267,4 @@ private:
 };
 
 } // namespace ptdecoder
-#endif // PTDecoder_h_
+#endif // PTManager_h_

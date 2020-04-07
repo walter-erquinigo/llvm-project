@@ -2,7 +2,7 @@
 #include "lldb/API/SBThread.h"
 #include "CommandUtils.h"
 
-  ProcessorTraceStop::ProcessorTraceStop(std::shared_ptr<ptdecoder::PTDecoder> &pt_decoder)
+  ProcessorTraceStop::ProcessorTraceStop(std::shared_ptr<ptdecoder::PTManager> &pt_decoder)
       : ProcessorTraceCommand(), pt_decoder_sp(pt_decoder) {}
 
   ProcessorTraceStop::~ProcessorTraceStop() {}

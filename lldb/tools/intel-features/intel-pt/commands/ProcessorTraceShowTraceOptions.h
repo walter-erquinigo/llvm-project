@@ -1,7 +1,7 @@
 #ifndef LLDB_TOOLS_INTEL_PT_PROCESSOR_TRACE_SHOW_TRACE_OPTIONS_H
 #define LLDB_TOOLS_INTEL_PT_PROCESSOR_TRACE_SHOW_TRACE_OPTIONS_H
 
-#include "../trace/PTDecoder.h"
+#include "../trace/PTManager.h"
 #include "ProcessorTraceCommand.h"
 #include "lldb/API/SBCommandInterpreter.h"
 #include "lldb/API/SBCommandReturnObject.h"
@@ -9,7 +9,7 @@
 
 class ProcessorTraceShowTraceOptions : public ProcessorTraceCommand {
 public:
-  ProcessorTraceShowTraceOptions(std::shared_ptr<ptdecoder::PTDecoder> &pt_decoder);
+  ProcessorTraceShowTraceOptions(std::shared_ptr<ptdecoder::PTManager> &pt_decoder);
 
   ~ProcessorTraceShowTraceOptions();
 
@@ -23,7 +23,7 @@ public:
   const char *GetSyntax() override;
 
 private:
-  std::shared_ptr<ptdecoder::PTDecoder> pt_decoder_sp;
+  std::shared_ptr<ptdecoder::PTManager> pt_decoder_sp;
 };
 
 #endif // LLDB_TOOLS_INTEL_PT_PROCESSOR_TRACE_SHOW_TRACE_OPTIONS_H

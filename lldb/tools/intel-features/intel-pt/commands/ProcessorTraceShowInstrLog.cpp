@@ -5,7 +5,7 @@
 #include "CommandUtils.h"
 #include "lldb/API/SBThread.h"
 
-  ProcessorTraceShowInstrLog::ProcessorTraceShowInstrLog(std::shared_ptr<ptdecoder::PTDecoder> &pt_decoder)
+  ProcessorTraceShowInstrLog::ProcessorTraceShowInstrLog(std::shared_ptr<ptdecoder::PTManager> &pt_decoder)
       : ProcessorTraceCommand(), pt_decoder_sp(pt_decoder) {}
 
   ProcessorTraceShowInstrLog::~ProcessorTraceShowInstrLog() {}

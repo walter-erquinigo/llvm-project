@@ -6,7 +6,7 @@
 #include "lldb/API/SBThread.h"
 
 ProcessorTraceShowTraceOptions::ProcessorTraceShowTraceOptions(
-    std::shared_ptr<ptdecoder::PTDecoder> &pt_decoder)
+    std::shared_ptr<ptdecoder::PTManager> &pt_decoder)
     : ProcessorTraceCommand(), pt_decoder_sp(pt_decoder) {}
 
 ProcessorTraceShowTraceOptions::~ProcessorTraceShowTraceOptions() {}

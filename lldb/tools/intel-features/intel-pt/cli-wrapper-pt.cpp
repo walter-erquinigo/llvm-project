@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// CLI Wrapper of PTDecoder Tool to enable it to be used through LLDB's CLI. The
+// CLI Wrapper of PTManager Tool to enable it to be used through LLDB's CLI. The
 // wrapper provides a new command called processor-trace with 4 child
 // subcommands as follows:
 // processor-trace start
@@ -25,14 +25,14 @@ bool PTPluginInitialize(lldb::SBDebugger &debugger) {
   lldb::SBCommandInterpreter interpreter = debugger.GetCommandInterpreter();
   lldb::SBCommand proc_trace = interpreter.AddMultiwordCommand(
       "processor-trace", "Intel(R) Processor Trace for thread/process");
-  std::shared_ptr<ptdecoder::PTDecoder> PTDecoderSP(
-      new ptdecoder::PTDecoder(debugger));
+  std::shared_ptr<ptdecoder::PTManager> PTManagerSP(
+      new ptdecoder::PTManager(debugger));
 
   ProcessorTraceCommand *commands[] = {
-      new ProcessorTraceStart(PTDecoderSP),
-      new ProcessorTraceStop(PTDecoderSP),
-      new ProcessorTraceShowInstrLog(PTDecoderSP),
-      new ProcessorTraceShowTraceOptions(PTDecoderSP),
+      new ProcessorTraceStart(PTManagerSP),
+      new ProcessorTraceStop(PTManagerSP),
+      new ProcessorTraceShowInstrLog(PTManagerSP),
+      new ProcessorTraceShowTraceOptions(PTManagerSP),
   };
 
   for (ProcessorTraceCommand *command : commands)

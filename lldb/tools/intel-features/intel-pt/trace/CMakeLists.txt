@@ -1,6 +1,6 @@
 add_lldb_library(lldbIntelPTTrace
   Decoder.cpp
-  PTDecoder.cpp
+  PTManager.cpp
 
   LINK_LIBS
     liblldb
