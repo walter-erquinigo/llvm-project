@@ -9,7 +9,7 @@
 #include "lldb/API/SBThread.h"
 
 ProcessorTraceStart::ProcessorTraceStart(
-    std::shared_ptr<ptdecoder::PTManager> &pt_decoder)
+    std::shared_ptr<intelpt::PTManager> &pt_decoder)
     : ProcessorTraceCommand(), pt_decoder_sp(pt_decoder) {}
 
 ProcessorTraceStart::~ProcessorTraceStart() {}

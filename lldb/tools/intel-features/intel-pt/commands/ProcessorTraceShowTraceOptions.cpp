@@ -6,7 +6,7 @@
 #include "lldb/API/SBThread.h"
 
 ProcessorTraceShowTraceOptions::ProcessorTraceShowTraceOptions(
-    std::shared_ptr<ptdecoder::PTManager> &pt_decoder)
+    std::shared_ptr<intelpt::PTManager> &pt_decoder)
     : ProcessorTraceCommand(), pt_decoder_sp(pt_decoder) {}
 
 ProcessorTraceShowTraceOptions::~ProcessorTraceShowTraceOptions() {}
@@ -60,7 +60,7 @@ bool ProcessorTraceShowTraceOptions::DoExecute(lldb::SBDebugger debugger, char *
       thread = process.GetThreadByID(thread_id);
     thread_id = thread.GetThreadID();
 
-    ptdecoder::PTTraceOptions options;
+    intelpt::PTTraceOptions options;
     pt_decoder_sp->GetProcessorTraceInfo(process, thread_id, options, error);
     if (!error.Success()) {
       res.Printf("thread #%" PRIu32 ": tid=%" PRIu64 ", error: %s",

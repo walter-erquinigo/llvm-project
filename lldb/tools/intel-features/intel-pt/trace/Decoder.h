@@ -28,7 +28,7 @@
 
 #include "intel-pt.h"
 
-namespace ptdecoder_private {
+namespace intelpt_private {
 /// \class Instruction
 /// Represents an assembly instruction containing raw
 ///     instruction bytes, instruction address along with information
@@ -321,5 +321,5 @@ private:
                                       // to this Decoder instance
 };
 
-} // namespace ptdecoder_private
+} // namespace intelpt_private
 #endif // Decoder_h_

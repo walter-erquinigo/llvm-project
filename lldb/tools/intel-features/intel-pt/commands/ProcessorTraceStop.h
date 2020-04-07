@@ -9,7 +9,7 @@
 
 class ProcessorTraceStop : public ProcessorTraceCommand {
 public:
-  ProcessorTraceStop(std::shared_ptr<ptdecoder::PTManager> &pt_decoder);
+  ProcessorTraceStop(std::shared_ptr<intelpt::PTManager> &pt_decoder);
 
   ~ProcessorTraceStop();
 
@@ -23,7 +23,7 @@ public:
   const char *GetSyntax() override;
 
 private:
-  std::shared_ptr<ptdecoder::PTManager> pt_decoder_sp;
+  std::shared_ptr<intelpt::PTManager> pt_decoder_sp;
 };
 
 #endif // LLDB_TOOLS_INTEL_PT_PROCESSOR_TRACE_STOP_H

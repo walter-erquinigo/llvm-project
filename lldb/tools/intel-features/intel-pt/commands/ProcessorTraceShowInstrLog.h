@@ -9,7 +9,7 @@
 
 class ProcessorTraceShowInstrLog : public ProcessorTraceCommand {
 public:
-  ProcessorTraceShowInstrLog(std::shared_ptr<ptdecoder::PTManager> &pt_decoder);
+  ProcessorTraceShowInstrLog(std::shared_ptr<intelpt::PTManager> &pt_decoder);
 
   ~ProcessorTraceShowInstrLog();
 
@@ -23,7 +23,7 @@ public:
   const char *GetSyntax() override;
 
 private:
-  std::shared_ptr<ptdecoder::PTManager> pt_decoder_sp;
+  std::shared_ptr<intelpt::PTManager> pt_decoder_sp;
   const uint32_t m_default_count = 10;
 };
 

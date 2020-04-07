@@ -3,7 +3,7 @@
 %{
 #include "lldb/lldb-public.h"
 #include "intel-pt/trace/PTManager.h"
-using namespace ptdecoder;
+using namespace intelpt;
 %}
 
 /* Undefine GCC keyword to make Swig happy when processing glibc's stdint.h */

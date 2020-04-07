@@ -9,7 +9,7 @@
 
 class ProcessorTraceStart : public ProcessorTraceCommand {
 public:
-  ProcessorTraceStart(std::shared_ptr<ptdecoder::PTManager> &pt_decoder);
+  ProcessorTraceStart(std::shared_ptr<intelpt::PTManager> &pt_decoder);
 
   ~ProcessorTraceStart();
 
@@ -23,7 +23,7 @@ public:
   const char *GetSyntax() override;
 
 private:
-  std::shared_ptr<ptdecoder::PTManager> pt_decoder_sp;
+  std::shared_ptr<intelpt::PTManager> pt_decoder_sp;
   const uint32_t m_max_trace_buff_size = 0x3fff;
   const uint32_t m_default_trace_buff_size = 4096;
 };

@@ -20,14 +20,14 @@
 #include "lldb/lldb-enumerations.h"
 #include "lldb/lldb-types.h"
 
-namespace ptdecoder_private {
+namespace intelpt_private {
 class Instruction;
 class InstructionList;
 class TraceOptions;
 class Decoder;
-} // namespace ptdecoder_private
+} // namespace intelpt_private
 
-namespace ptdecoder {
+namespace intelpt {
 
 /// \class PTInstruction
 /// Represents an assembly instruction containing raw
@@ -38,7 +38,7 @@ class PTInstruction {
 public:
   PTInstruction() = default;
 
-  PTInstruction(const std::shared_ptr<ptdecoder_private::Instruction> &ptr);
+  PTInstruction(const std::shared_ptr<intelpt_private::Instruction> &ptr);
 
   ~PTInstruction();
 
@@ -72,7 +72,7 @@ public:
   bool GetSpeculative() const;
 
 private:
-  std::shared_ptr<ptdecoder_private::Instruction> m_opaque_sp;
+  std::shared_ptr<intelpt_private::Instruction> m_opaque_sp;
 };
 
 /// \class PTInstructionList
@@ -91,9 +91,9 @@ public:
 private:
   friend class PTManager;
 
-  void SetSP(const std::shared_ptr<ptdecoder_private::InstructionList> &ptr);
+  void SetSP(const std::shared_ptr<intelpt_private::InstructionList> &ptr);
 
-  std::shared_ptr<ptdecoder_private::InstructionList> m_opaque_sp;
+  std::shared_ptr<intelpt_private::InstructionList> m_opaque_sp;
 };
 
 /// \class PTTraceOptions
@@ -121,9 +121,9 @@ public:
 private:
   friend class PTManager;
 
-  void SetSP(const std::shared_ptr<ptdecoder_private::TraceOptions> &ptr);
+  void SetSP(const std::shared_ptr<intelpt_private::TraceOptions> &ptr);
 
-  std::shared_ptr<ptdecoder_private::TraceOptions> m_opaque_sp;
+  std::shared_ptr<intelpt_private::TraceOptions> m_opaque_sp;
 };
 
 /// \class PTManager
@@ -263,8 +263,8 @@ public:
                              PTTraceOptions &options, lldb::SBError &sberror);
 
 private:
-  std::shared_ptr<ptdecoder_private::Decoder> m_opaque_sp;
+  std::shared_ptr<intelpt_private::Decoder> m_opaque_sp;
 };
 
-} // namespace ptdecoder
+} // namespace intelpt
 #endif // PTManager_h_

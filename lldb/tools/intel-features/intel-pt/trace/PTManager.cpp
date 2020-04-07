@@ -9,12 +9,12 @@
 #include "PTManager.h"
 #include "Decoder.h"
 
-using namespace ptdecoder;
-using namespace ptdecoder_private;
+using namespace intelpt;
+using namespace intelpt_private;
 
 // PTInstruction class member functions definitions
 PTInstruction::PTInstruction(
-    const std::shared_ptr<ptdecoder_private::Instruction> &ptr)
+    const std::shared_ptr<intelpt_private::Instruction> &ptr)
     : m_opaque_sp(ptr) {}
 
 PTInstruction::~PTInstruction() {}
@@ -42,15 +42,15 @@ size_t PTInstructionList::GetSize() const {
 
 PTInstruction PTInstructionList::GetInstructionAtIndex(uint32_t idx) {
   if (m_opaque_sp)
-    return PTInstruction(std::shared_ptr<ptdecoder_private::Instruction>(
+    return PTInstruction(std::shared_ptr<intelpt_private::Instruction>(
         new Instruction(m_opaque_sp->GetInstructionAtIndex(idx))));
 
-  return PTInstruction(std::shared_ptr<ptdecoder_private::Instruction>(
+  return PTInstruction(std::shared_ptr<intelpt_private::Instruction>(
       new Instruction("invalid instruction")));
 }
 
 void PTInstructionList::SetSP(
-    const std::shared_ptr<ptdecoder_private::InstructionList> &ptr) {
+    const std::shared_ptr<intelpt_private::InstructionList> &ptr) {
   m_opaque_sp = ptr;
 }
 void PTInstructionList::Clear() {
@@ -81,13 +81,13 @@ lldb::SBStructuredData PTTraceOptions::GetTraceParams(lldb::SBError &error) {
 }
 
 void PTTraceOptions::SetSP(
-    const std::shared_ptr<ptdecoder_private::TraceOptions> &ptr) {
+    const std::shared_ptr<intelpt_private::TraceOptions> &ptr) {
   m_opaque_sp = ptr;
 }
 
 // PTManager class member functions definitions
 PTManager::PTManager(lldb::SBDebugger &sbdebugger)
-    : m_opaque_sp(new ptdecoder_private::Decoder(sbdebugger)) {}
+    : m_opaque_sp(new intelpt_private::Decoder(sbdebugger)) {}
 
 void PTManager::StartProcessorTrace(lldb::SBProcess &sbprocess,
                                     lldb::SBTraceOptions &sbtraceoptions,
@@ -120,7 +120,7 @@ void PTManager::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,
     return;
   }
 
-  std::shared_ptr<ptdecoder_private::InstructionList> insn_list_ptr(
+  std::shared_ptr<intelpt_private::InstructionList> insn_list_ptr(
       new InstructionList());
   m_opaque_sp->GetInstructionLogAtOffset(sbprocess, tid, offset, count,
                                          *insn_list_ptr, sberror);
@@ -138,7 +138,7 @@ void PTManager::GetProcessorTraceInfo(lldb::SBProcess &sbprocess,
     return;
   }
 
-  std::shared_ptr<ptdecoder_private::TraceOptions> trace_options_ptr(
+  std::shared_ptr<intelpt_private::TraceOptions> trace_options_ptr(
       new TraceOptions());
   m_opaque_sp->GetProcessorTraceInfo(sbprocess, tid, *trace_options_ptr,
                                      sberror);

@@ -5,7 +5,7 @@
 #include "CommandUtils.h"
 #include "lldb/API/SBThread.h"
 
-  ProcessorTraceShowInstrLog::ProcessorTraceShowInstrLog(std::shared_ptr<ptdecoder::PTManager> &pt_decoder)
+  ProcessorTraceShowInstrLog::ProcessorTraceShowInstrLog(std::shared_ptr<intelpt::PTManager> &pt_decoder)
       : ProcessorTraceCommand(), pt_decoder_sp(pt_decoder) {}
 
   ProcessorTraceShowInstrLog::~ProcessorTraceShowInstrLog() {}
@@ -78,7 +78,7 @@
         offset = count - 1;
 
       // Get the instruction log
-      ptdecoder::PTInstructionList insn_list;
+      intelpt::PTInstructionList insn_list;
       pt_decoder_sp->GetInstructionLogAtOffset(process, thread_id, offset,
                                                count, insn_list, error);
       if (!error.Success()) {
@@ -96,7 +96,7 @@
           debugger.GetCommandInterpreter());
       lldb::SBCommandReturnObject result_obj;
       for (size_t i = 0; i < insn_list.GetSize(); i++) {
-        ptdecoder::PTInstruction insn = insn_list.GetInstructionAtIndex(i);
+        intelpt::PTInstruction insn = insn_list.GetInstructionAtIndex(i);
         uint64_t addr = insn.GetInsnAddress();
         std::string error = insn.GetError();
         if (!error.empty()) {

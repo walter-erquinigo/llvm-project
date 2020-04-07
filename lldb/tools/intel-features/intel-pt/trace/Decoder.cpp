@@ -16,7 +16,7 @@
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBThread.h"
 
-using namespace ptdecoder_private;
+using namespace intelpt_private;
 
 // This function removes entries of all the processes/threads which were once
 // registered in the class but are not alive anymore because they died or

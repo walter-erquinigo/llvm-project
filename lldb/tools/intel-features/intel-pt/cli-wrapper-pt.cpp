@@ -25,8 +25,8 @@ bool PTPluginInitialize(lldb::SBDebugger &debugger) {
   lldb::SBCommandInterpreter interpreter = debugger.GetCommandInterpreter();
   lldb::SBCommand proc_trace = interpreter.AddMultiwordCommand(
       "processor-trace", "Intel(R) Processor Trace for thread/process");
-  std::shared_ptr<ptdecoder::PTManager> PTManagerSP(
-      new ptdecoder::PTManager(debugger));
+  std::shared_ptr<intelpt::PTManager> PTManagerSP(
+      new intelpt::PTManager(debugger));
 
   ProcessorTraceCommand *commands[] = {
       new ProcessorTraceStart(PTManagerSP),
