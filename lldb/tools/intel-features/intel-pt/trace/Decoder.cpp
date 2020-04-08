@@ -7,14 +7,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "Decoder.h"
+#include "FunctionCallTreeBuilder.h"
 
 // C/C++ Includes
+#include <cassert>
 #include <cinttypes>
 #include <cstring>
+#include <memory>
 
 #include "lldb/API/SBModule.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBThread.h"
+#include "llvm/ADT/StringRef.h"
 
 using namespace intelpt_private;
 
@@ -323,7 +327,46 @@ void Decoder::DecodeProcessorTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
   // Start raw trace decoding
   Instructions &instruction_list = threadTraceInfo.GetInstructionLog();
   instruction_list.clear();
-  DecodeTrace(decoder, instruction_list, sberror);
+  lldb::SBError err;
+  DecodeTrace(decoder, instruction_list, err);
+
+  // reconstruct functions
+  FunctionCallTreeBuilder builder(sbprocess);
+  for (size_t i = 0; i < instruction_list.size(); i++)
+    builder.AppendInstruction(instruction_list[i]);
+
+  // We include the current PC to be able to have the backtrace at the current
+  // position
+  builder.AppendPC(tid);
+
+  builder.Finalize(threadTraceInfo.GetFunctionCallTree());
+
+  /*
+    printf(">>> FUNCTION SEGMENTS <<<\n");
+    int id = 0;
+    for (auto &segment : segments) {
+      printf("%5d", id++);
+      for (int i = 0; i < segment->GetLevel(); i++)
+        printf(" ");
+
+      if (segment->IsGap())
+        printf("Gap\n");
+      else {
+        int last_iclass = segment->GetLastInstruction()->GetInsnClass();
+        const char *parent_name = segment->GetParent() == nullptr
+                                      ? ""
+                                      : segment->GetParent()->GetFunctionName();
+        const char *function_name = segment->GetFunctionName();
+        int parent_id =
+            segment->GetParent() == nullptr ? -1 :
+    segment->GetParent()->GetID(); printf("%s  (%s)      %d %s \n",
+    function_name, last_iclass == ptic_call ? "CALL" : last_iclass == ptic_jump
+                         ? "JUMP"
+                         : last_iclass == ptic_return ? "RETURN" : "OTHER",
+               parent_id, parent_name);
+      }
+    }
+    */
 }
 
 // Raw trace decoding requires information of Read & Execute sections of each
@@ -607,7 +650,8 @@ int Decoder::HandlePTInstructionEvents(pt_insn_decoder *decoder, int errcode,
 
     // The list of events are in
     // https://github.com/intel/libipt/blob/master/doc/man/pt_qry_event.3.md
-    if (event.type == ptev_overflow) {
+    if (event.type == ptev_overflow ||
+        (event.type == ptev_enabled && event.variant.enabled.resumed == 0)) {
       int append_errcode = AppendErrorToInstructionList(
           errcode, decoder, instruction_list, sberror);
       if (append_errcode < 0)
@@ -738,6 +782,34 @@ void Decoder::Diagnose(struct pt_insn_decoder *decoder, int decode_error,
           "[0x%" PRIu64 "]",
           pt_errstr(pt_errcode(decode_error)), offset);
   }
+}
+
+void Decoder::GetFunctionCallTree(
+    lldb::SBProcess &sbprocess, lldb::tid_t tid,
+    std::vector<std::shared_ptr<FunctionSegment>> &result_list,
+    lldb::SBError &sberror) {
+  sberror.Clear();
+  CheckDebuggerID(sbprocess, sberror);
+  if (!sberror.Success()) {
+    return;
+  }
+  std::lock_guard<std::mutex> guard(
+      m_mapProcessUID_mapThreadID_TraceInfo_mutex);
+  RemoveDeadProcessesAndThreads(sbprocess);
+  ThreadTraceInfo *threadTraceInfo = nullptr;
+  FetchAndDecode(sbprocess, tid, sberror, &threadTraceInfo);
+  if (!sberror.Success()) {
+    return;
+  }
+  if (threadTraceInfo == nullptr) {
+    sberror.SetErrorStringWithFormat("internal error");
+    return;
+  }
+  std::vector<std::shared_ptr<FunctionSegment>> &call_tree =
+      threadTraceInfo->GetFunctionCallTree();
+  result_list.reserve(call_tree.size());
+  result_list.assign(call_tree.begin(), call_tree.end());
+  return;
 }
 
 void Decoder::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,

@@ -15,6 +15,8 @@
 #include <string>
 #include <vector>
 
+#include "FunctionSegment.h"
+#include "Instruction.h"
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBProcess.h"
@@ -29,82 +31,6 @@
 #include "intel-pt.h"
 
 namespace intelpt_private {
-/// \class Instruction
-/// Represents an assembly instruction containing raw
-///     instruction bytes, instruction address along with information
-///     regarding execution flow context and Intel(R) Processor Trace
-///     context.
-class Instruction {
-public:
-  Instruction() : ip(0), data(), error(), iclass(ptic_error), speculative(0) {}
-
-  Instruction(const Instruction &insn) = default;
-
-  Instruction(const struct pt_insn &insn)
-      : ip(insn.ip), data(), error(insn.size == 0 ? "invalid instruction" : ""),
-        iclass(insn.iclass), speculative(insn.speculative) {
-    if (insn.size != 0)
-      data.assign(insn.raw, insn.raw + insn.size);
-  }
-
-  Instruction(const char *err)
-      : ip(0), data(), error(err ? err : "unknown error"), iclass(ptic_error),
-        speculative(0) {}
-
-  ~Instruction() {}
-
-  uint64_t GetInsnAddress() const { return ip; }
-
-  size_t GetRawBytes(void *buf, size_t size) const {
-    if ((buf == nullptr) || (size == 0))
-      return data.size();
-
-    size_t bytes_to_read = ((size <= data.size()) ? size : data.size());
-    ::memcpy(buf, data.data(), bytes_to_read);
-    return bytes_to_read;
-  }
-
-  const std::string &GetError() const { return error; }
-
-  bool GetSpeculative() const { return speculative; }
-
-private:
-  uint64_t ip;               // instruction address in inferior's memory image
-  std::vector<uint8_t> data; // raw bytes
-  std::string error;         // Error string if instruction is invalid
-  enum pt_insn_class iclass; // classification of the instruction
-  // A collection of flags giving additional information about instruction
-  uint32_t speculative : 1; // Instruction was executed speculatively or not
-};
-
-/// \class InstructionList
-/// Represents a list of assembly instructions. Each instruction is of
-///     type Instruction.
-class InstructionList {
-public:
-  InstructionList() : m_insn_vec() {}
-
-  InstructionList(const InstructionList &insn_list)
-      : m_insn_vec(insn_list.m_insn_vec) {}
-
-  ~InstructionList() {}
-
-  // Get number of instructions in the list
-  size_t GetSize() const { return m_insn_vec.size(); }
-
-  // Get instruction at index
-  Instruction GetInstructionAtIndex(uint32_t idx) {
-    return (idx < m_insn_vec.size() ? m_insn_vec[idx]
-                                    : Instruction("invalid instruction"));
-  }
-
-  // Append intruction at the end of the list
-  void AppendInstruction(Instruction inst) { m_insn_vec.push_back(inst); }
-
-private:
-  std::vector<Instruction> m_insn_vec;
-};
-
 /// \class TraceOptions
 /// Provides Intel(R) Processor Trace specific configuration options and
 ///     other information obtained by decoding and post-processing the trace
@@ -163,6 +89,10 @@ public:
   void StopProcessorTrace(lldb::SBProcess &sbprocess, lldb::SBError &sberror,
                           lldb::tid_t tid = LLDB_INVALID_THREAD_ID);
 
+  void GetFunctionCallTree(
+      lldb::SBProcess &sbprocess, lldb::tid_t tid,
+      std::vector<std::shared_ptr<FunctionSegment>> &result_list,
+      lldb::SBError &sberror);
   void GetInstructionLogAtOffset(lldb::SBProcess &sbprocess, lldb::tid_t tid,
                                  uint32_t offset, uint32_t count,
                                  InstructionList &result_list,
@@ -288,6 +218,10 @@ private:
 
     Instructions &GetInstructionLog() { return m_instruction_log; }
 
+    std::vector<std::shared_ptr<FunctionSegment>> &GetFunctionCallTree() {
+      return m_function_call_tree;
+    }
+
     uint32_t GetStopID() const { return m_thread_stop_id; }
 
     void SetStopID(uint32_t stop_id) { m_thread_stop_id = stop_id; }
@@ -306,6 +240,8 @@ private:
     lldb::SBTrace m_trace; // unique tracing instance of a thread/process
     CPUInfo m_pt_cpu; // cpu info of the target on which inferior is running
     Instructions m_instruction_log; // complete instruction log
+    std::vector<std::shared_ptr<FunctionSegment>>
+        m_function_call_tree; // complete function call tree
   };
 
   typedef std::map<lldb::user_id_t, ThreadTraceInfo> MapThreadID_TraceInfo;

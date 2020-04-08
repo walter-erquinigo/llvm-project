@@ -25,6 +25,7 @@ class Instruction;
 class InstructionList;
 class TraceOptions;
 class Decoder;
+class FunctionSegment;
 } // namespace intelpt_private
 
 namespace intelpt {
@@ -94,6 +95,43 @@ private:
   void SetSP(const std::shared_ptr<intelpt_private::InstructionList> &ptr);
 
   std::shared_ptr<intelpt_private::InstructionList> m_opaque_sp;
+};
+
+class PTFunctionSegment {
+public:
+  const char *GetFunctionName() const;
+
+  const char *GetDisplayName() const;
+
+  lldb::addr_t GetStartLoadAddress() const;
+
+  int GetLevel() const;
+  PTFunctionSegment();
+
+private:
+  friend class PTFunctionCallTree;
+
+  PTFunctionSegment(std::shared_ptr<intelpt_private::FunctionSegment> segment);
+
+  std::shared_ptr<intelpt_private::FunctionSegment> m_opaque_sp;
+};
+
+class PTFunctionCallTree {
+public:
+  PTFunctionSegment GetFunctionSegmentAtIndex(size_t index) const;
+
+  size_t GetSize() const;
+
+private:
+  friend class PTManager;
+
+  void SetSP(std::shared_ptr<
+             std::vector<std::shared_ptr<intelpt_private::FunctionSegment>>>
+                 ptr);
+
+  std::shared_ptr<
+      std::vector<std::shared_ptr<intelpt_private::FunctionSegment>>>
+      m_opaque_sp;
 };
 
 /// \class PTTraceOptions
@@ -238,6 +276,10 @@ public:
                                  uint32_t offset, uint32_t count,
                                  PTInstructionList &result_list,
                                  lldb::SBError &sberror);
+
+  void GetFunctionCallTree(lldb::SBProcess &sbprocess, lldb::tid_t tid,
+                           PTFunctionCallTree &call_tree,
+                           lldb::SBError &sberror);
 
   /// Get Intel(R) Processor Trace specific information for a thread of a
   /// process. The information contains the actual configuration options with

@@ -35,6 +35,47 @@ bool PTInstruction::GetSpeculative() const {
   return (m_opaque_sp ? m_opaque_sp->GetSpeculative() : 0);
 }
 
+// SEGMENT
+const char *PTFunctionSegment::GetFunctionName() const {
+  return (m_opaque_sp ? m_opaque_sp->GetFunctionName() : nullptr);
+}
+
+const char *PTFunctionSegment::GetDisplayName() const {
+  return (m_opaque_sp ? m_opaque_sp->GetDisplayName() : nullptr);
+}
+
+lldb::addr_t PTFunctionSegment::GetStartLoadAddress() const {
+  return (m_opaque_sp ? m_opaque_sp->GetStartLoadAddress()
+                      : LLDB_INVALID_ADDRESS);
+}
+
+int PTFunctionSegment::GetLevel() const {
+  return (m_opaque_sp ? m_opaque_sp->GetLevel() : 0);
+}
+
+PTFunctionSegment::PTFunctionSegment(std::shared_ptr<FunctionSegment> segment)
+    : m_opaque_sp(segment) {}
+
+PTFunctionSegment::PTFunctionSegment() {}
+
+// CALL TREE
+PTFunctionSegment
+PTFunctionCallTree::GetFunctionSegmentAtIndex(size_t index) const {
+  return m_opaque_sp ? PTFunctionSegment(m_opaque_sp->at(index))
+                     : PTFunctionSegment();
+}
+
+size_t PTFunctionCallTree::GetSize() const {
+  return m_opaque_sp ? m_opaque_sp->size() : 0;
+}
+
+void PTFunctionCallTree::SetSP(
+    std::shared_ptr<
+        std::vector<std::shared_ptr<intelpt_private::FunctionSegment>>>
+        call_tree) {
+  m_opaque_sp = call_tree;
+}
+
 // PTInstructionList class member functions definitions
 size_t PTInstructionList::GetSize() const {
   return (m_opaque_sp ? m_opaque_sp->GetSize() : 0);
@@ -128,6 +169,24 @@ void PTManager::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,
     return;
 
   result_list.SetSP(insn_list_ptr);
+}
+
+void PTManager::GetFunctionCallTree(lldb::SBProcess &sbprocess, lldb::tid_t tid,
+                                    PTFunctionCallTree &call_tree,
+                                    lldb::SBError &sberror) {
+  if (m_opaque_sp == nullptr) {
+    sberror.SetErrorStringWithFormat("invalid PTManager instance");
+    return;
+  }
+
+  std::shared_ptr<
+      std::vector<std::shared_ptr<intelpt_private::FunctionSegment>>>
+      call_tree_ptr(
+          new std::vector<std::shared_ptr<intelpt_private::FunctionSegment>>());
+  m_opaque_sp->GetFunctionCallTree(sbprocess, tid, *call_tree_ptr, sberror);
+  if (!sberror.Success())
+    return;
+  call_tree.SetSP(call_tree_ptr);
 }
 
 void PTManager::GetProcessorTraceInfo(lldb::SBProcess &sbprocess,
