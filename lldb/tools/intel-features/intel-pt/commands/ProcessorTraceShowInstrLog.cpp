@@ -98,9 +98,8 @@
       for (size_t i = 0; i < insn_list.GetSize(); i++) {
         intelpt::PTInstruction insn = insn_list.GetInstructionAtIndex(i);
         uint64_t addr = insn.GetInsnAddress();
-        std::string error = insn.GetError();
-        if (!error.empty()) {
-          res.AppendMessage(error.c_str());
+        if (insn.IsError()) {
+          res.Printf("Intel-PT decoder error: %s\n", insn.GetError());
           continue;
         }
 

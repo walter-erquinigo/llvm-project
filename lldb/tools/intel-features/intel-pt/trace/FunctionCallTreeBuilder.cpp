@@ -204,7 +204,7 @@ void FunctionCallTreeBuilder::AppendInstruction(Instruction &insn) {
       m_segments.empty() ? nullptr : m_segments.back()->GetLastInstruction();
 
   // Errors indicate gaps
-  if (!insn.GetError().empty()) {
+  if (insn.IsError()) {
     UpdateFunctionSegmentsWithErrorInstruction(insn);
     return;
   }

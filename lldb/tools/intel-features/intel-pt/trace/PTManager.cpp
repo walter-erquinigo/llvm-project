@@ -27,8 +27,12 @@ size_t PTInstruction::GetRawBytes(void *buf, size_t size) const {
   return (m_opaque_sp ? m_opaque_sp->GetRawBytes(buf, size) : 0);
 }
 
-std::string PTInstruction::GetError() const {
+const char *PTInstruction::GetError() const {
   return (m_opaque_sp ? m_opaque_sp->GetError() : "null pointer");
+}
+
+bool PTInstruction::IsError() const  {
+  return m_opaque_sp ? m_opaque_sp->IsError() : true;
 }
 
 bool PTInstruction::GetSpeculative() const {
@@ -87,7 +91,7 @@ PTInstruction PTInstructionList::GetInstructionAtIndex(uint32_t idx) {
         new Instruction(m_opaque_sp->GetInstructionAtIndex(idx))));
 
   return PTInstruction(std::shared_ptr<intelpt_private::Instruction>(
-      new Instruction("invalid instruction")));
+      new Instruction()));
 }
 
 void PTInstructionList::SetSP(

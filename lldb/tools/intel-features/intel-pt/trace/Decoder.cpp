@@ -327,8 +327,7 @@ void Decoder::DecodeProcessorTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
   // Start raw trace decoding
   Instructions &instruction_list = threadTraceInfo.GetInstructionLog();
   instruction_list.clear();
-  lldb::SBError err;
-  DecodeTrace(decoder, instruction_list, err);
+  DecodeTrace(decoder, instruction_list);
 
   // reconstruct functions
   FunctionCallTreeBuilder builder(sbprocess);
@@ -340,33 +339,6 @@ void Decoder::DecodeProcessorTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
   builder.AppendPC(tid);
 
   builder.Finalize(threadTraceInfo.GetFunctionCallTree());
-
-  /*
-    printf(">>> FUNCTION SEGMENTS <<<\n");
-    int id = 0;
-    for (auto &segment : segments) {
-      printf("%5d", id++);
-      for (int i = 0; i < segment->GetLevel(); i++)
-        printf(" ");
-
-      if (segment->IsGap())
-        printf("Gap\n");
-      else {
-        int last_iclass = segment->GetLastInstruction()->GetInsnClass();
-        const char *parent_name = segment->GetParent() == nullptr
-                                      ? ""
-                                      : segment->GetParent()->GetFunctionName();
-        const char *function_name = segment->GetFunctionName();
-        int parent_id =
-            segment->GetParent() == nullptr ? -1 :
-    segment->GetParent()->GetID(); printf("%s  (%s)      %d %s \n",
-    function_name, last_iclass == ptic_call ? "CALL" : last_iclass == ptic_jump
-                         ? "JUMP"
-                         : last_iclass == ptic_return ? "RETURN" : "OTHER",
-               parent_id, parent_name);
-      }
-    }
-    */
 }
 
 // Raw trace decoding requires information of Read & Execute sections of each
@@ -607,41 +579,8 @@ void Decoder::InitializePTInstDecoder(
   }
 }
 
-void Decoder::AppendErrorWithOffsetToInstructionList(
-    int errcode, uint64_t decoder_offset, Instructions &instruction_list,
-    lldb::SBError &sberror) {
-  sberror.SetErrorStringWithFormat(
-      "processor trace decoding library: \"%s\"  [decoder_offset] => "
-      "[0x%" PRIu64 "]",
-      pt_errstr(pt_errcode(errcode)), decoder_offset);
-  instruction_list.emplace_back(sberror.GetCString());
-}
-
-void Decoder::AppendErrorWithoutOffsetToInstructionList(
-    int errcode, Instructions &instruction_list, lldb::SBError &sberror) {
-  sberror.SetErrorStringWithFormat("processor trace decoding library: \"%s\"",
-                                   pt_errstr(pt_errcode(errcode)));
-  instruction_list.emplace_back(sberror.GetCString());
-}
-
-int Decoder::AppendErrorToInstructionList(int errcode, pt_insn_decoder *decoder,
-                                          Instructions &instruction_list,
-                                          lldb::SBError &sberror) {
-  uint64_t decoder_offset = 0;
-  int errcode_off = pt_insn_get_offset(decoder, &decoder_offset);
-  if (errcode_off < 0) {
-    AppendErrorWithoutOffsetToInstructionList(errcode, instruction_list,
-                                              sberror);
-    return errcode_off;
-  }
-  AppendErrorWithOffsetToInstructionList(errcode, decoder_offset,
-                                         instruction_list, sberror);
-  return 0;
-}
-
 int Decoder::HandlePTInstructionEvents(pt_insn_decoder *decoder, int errcode,
-                                       Instructions &instruction_list,
-                                       lldb::SBError &sberror) {
+                                       Instructions &instruction_list) {
   while (errcode & pts_event_pending) {
     pt_event event;
     errcode = pt_insn_event(decoder, &event, sizeof(event));
@@ -652,10 +591,7 @@ int Decoder::HandlePTInstructionEvents(pt_insn_decoder *decoder, int errcode,
     // https://github.com/intel/libipt/blob/master/doc/man/pt_qry_event.3.md
     if (event.type == ptev_overflow ||
         (event.type == ptev_enabled && event.variant.enabled.resumed == 0)) {
-      int append_errcode = AppendErrorToInstructionList(
-          errcode, decoder, instruction_list, sberror);
-      if (append_errcode < 0)
-        return append_errcode;
+      instruction_list.emplace_back(errcode);
     }
     // Other events don't signal stream errors
   }
@@ -665,8 +601,7 @@ int Decoder::HandlePTInstructionEvents(pt_insn_decoder *decoder, int errcode,
 
 // Start actual decoding of raw trace
 void Decoder::DecodeTrace(struct pt_insn_decoder *decoder,
-                          Instructions &instruction_list,
-                          lldb::SBError &sberror) {
+                          Instructions &instruction_list) {
   uint64_t decoder_offset = 0;
 
   while (1) {
@@ -684,16 +619,12 @@ void Decoder::DecodeTrace(struct pt_insn_decoder *decoder,
 
       int errcode_off = pt_insn_get_offset(decoder, &decoder_offset);
       if (errcode_off < 0) {
-        AppendErrorWithoutOffsetToInstructionList(errcode, instruction_list,
-                                                  sberror);
+        instruction_list.emplace_back(errcode_off);
         return;
       }
 
-      sberror.SetErrorStringWithFormat(
-          "processor trace decoding library: \"%s\"  [decoder_offset] => "
-          "[0x%" PRIu64 "]",
-          pt_errstr(pt_errcode(errcode)), decoder_offset);
-      instruction_list.emplace_back(sberror.GetCString());
+      // There's a gap because we couldn't synchronize in the first place.
+      instruction_list.emplace_back(errcode);
       while (1) {
         errcode = pt_insn_sync_forward(decoder);
         if (errcode >= 0)
@@ -705,10 +636,7 @@ void Decoder::DecodeTrace(struct pt_insn_decoder *decoder,
         uint64_t new_decoder_offset = 0;
         errcode_off = pt_insn_get_offset(decoder, &new_decoder_offset);
         if (errcode_off < 0) {
-          sberror.SetErrorStringWithFormat(
-              "processor trace decoding library: \"%s\"",
-              pt_errstr(pt_errcode(errcode)));
-          instruction_list.emplace_back(sberror.GetCString());
+          instruction_list.emplace_back(errcode_off);
           return;
         } else if (new_decoder_offset <= decoder_offset) {
           // We tried resyncing the decoder and decoder didn't make any
@@ -716,20 +644,14 @@ void Decoder::DecodeTrace(struct pt_insn_decoder *decoder,
           // progress further. Hence, returning in this situation.
           return;
         }
-        AppendErrorWithOffsetToInstructionList(errcode, new_decoder_offset,
-                                               instruction_list, sberror);
         decoder_offset = new_decoder_offset;
       }
     }
 
     while (1) {
-      errcode = HandlePTInstructionEvents(decoder, errcode, instruction_list,
-                                          sberror);
+      errcode = HandlePTInstructionEvents(decoder, errcode, instruction_list);
       if (errcode < 0) {
-        int append_errcode = AppendErrorToInstructionList(
-            errcode, decoder, instruction_list, sberror);
-        if (append_errcode < 0)
-          return;
+        instruction_list.emplace_back(errcode);
         break;
       }
       errcode = pt_insn_next(decoder, &insn, sizeof(insn));
@@ -742,45 +664,13 @@ void Decoder::DecodeTrace(struct pt_insn_decoder *decoder,
         if (errcode == -pte_eos)
           return;
 
-        Diagnose(decoder, errcode, sberror, &insn);
-        instruction_list.emplace_back(sberror.GetCString());
+        instruction_list.emplace_back(errcode);
         break;
       }
       instruction_list.emplace_back(insn);
       if (errcode & pts_eos)
         return;
     }
-  }
-}
-
-// Function to diagnose and indicate errors during raw trace decoding
-void Decoder::Diagnose(struct pt_insn_decoder *decoder, int decode_error,
-                       lldb::SBError &sberror, const struct pt_insn *insn) {
-  int errcode;
-  uint64_t offset;
-
-  errcode = pt_insn_get_offset(decoder, &offset);
-  if (insn) {
-    if (errcode < 0)
-      sberror.SetErrorStringWithFormat(
-          "processor trace decoding library: \"%s\"  [decoder_offset, "
-          "last_successful_decoded_ip] => [?, 0x%" PRIu64 "]",
-          pt_errstr(pt_errcode(decode_error)), insn->ip);
-    else
-      sberror.SetErrorStringWithFormat(
-          "processor trace decoding library: \"%s\"  [decoder_offset, "
-          "last_successful_decoded_ip] => [0x%" PRIu64 ", 0x%" PRIu64 "]",
-          pt_errstr(pt_errcode(decode_error)), offset, insn->ip);
-  } else {
-    if (errcode < 0)
-      sberror.SetErrorStringWithFormat(
-          "processor trace decoding library: \"%s\"",
-          pt_errstr(pt_errcode(decode_error)));
-    else
-      sberror.SetErrorStringWithFormat(
-          "processor trace decoding library: \"%s\"  [decoder_offset] => "
-          "[0x%" PRIu64 "]",
-          pt_errstr(pt_errcode(decode_error)), offset);
   }
 }
 

@@ -67,10 +67,12 @@ public:
 
   // Get error string if it represents an invalid instruction. For a valid
   // instruction, an empty string is returned
-  std::string GetError() const;
+  const char * GetError() const;
 
   // Instruction was executed speculatively or not
   bool GetSpeculative() const;
+
+  bool IsError() const;
 
 private:
   std::shared_ptr<intelpt_private::Instruction> m_opaque_sp;

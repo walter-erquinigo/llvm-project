@@ -20,7 +20,7 @@ public:
 
   Instruction(const struct pt_insn &insn);
 
-  Instruction(const char *err);
+  Instruction(int error_code);
 
   ~Instruction();
 
@@ -30,16 +30,18 @@ public:
 
   pt_insn_class GetInsnClass() const;
 
-  const std::string &GetError() const;
+  const char *GetError() const;
 
   bool GetSpeculative() const;
 
   size_t GetSize() const;
 
+  bool IsError() const;
+
 private:
   lldb::addr_t ip;           // instruction address in inferior's memory image
   std::vector<uint8_t> data; // raw bytes
-  std::string error;         // Error string if instruction is invalid
+  int m_error_code;         // libipt error code if instruction is invalid
   enum pt_insn_class iclass; // classification of the instruction
   // A collection of flags giving additional information about instruction
   uint32_t speculative : 1; // Instruction was executed speculatively or not
