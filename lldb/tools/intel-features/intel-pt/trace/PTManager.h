@@ -283,9 +283,11 @@ public:
                            PTFunctionCallTree &call_tree,
                            lldb::SBError &sberror);
 
-  void GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, size_t &insn_index, lldb::SBError &sberror);
+  void GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
+                           size_t &insn_index, lldb::SBError &sberror);
 
-  void SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, size_t insn_index, lldb::SBError &sberror);
+  void SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
+                           size_t insn_index, lldb::SBError &sberror);
 
   /// Get Intel(R) Processor Trace specific information for a thread of a
   /// process. The information contains the actual configuration options with

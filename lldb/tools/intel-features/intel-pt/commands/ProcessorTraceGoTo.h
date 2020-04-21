@@ -14,7 +14,7 @@ public:
   ~ProcessorTraceGoTo();
 
   bool DoExecute(lldb::SBDebugger debugger, char **command,
-                         lldb::SBCommandReturnObject &result) override;
+                 lldb::SBCommandReturnObject &result) override;
 
   const char *GetCommandName() override;
 
@@ -24,7 +24,6 @@ public:
 
 private:
   std::shared_ptr<intelpt::PTManager> pt_decoder_sp;
-  const uint32_t m_default_count = 10;
 };
 
 #endif // LLDB_TOOLS_INTEL_PT_PROCESSOR_TRACE_GO_TO_H

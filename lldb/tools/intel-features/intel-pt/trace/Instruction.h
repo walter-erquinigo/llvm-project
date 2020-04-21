@@ -71,4 +71,6 @@ private:
   std::vector<Instruction> m_insn_vec;
 };
 
+typedef std::vector<Instruction> Instructions;
+
 } // namespace intelpt_private

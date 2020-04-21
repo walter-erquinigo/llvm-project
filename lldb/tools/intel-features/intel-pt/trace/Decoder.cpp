@@ -146,7 +146,7 @@ void Decoder::StartProcessorTrace(lldb::SBProcess &sbprocess,
 
   MapThreadID_TraceInfo &mapThreadID_TraceInfo =
       m_mapProcessUID_mapThreadID_TraceInfo[unique_id];
-  ThreadTraceInfo &trace_info = mapThreadID_TraceInfo[tid];
+  ThreadTrace &trace_info = mapThreadID_TraceInfo[tid];
   trace_info.SetUniqueTraceInstance(trace);
   trace_info.SetStopID(sbprocess.GetStopID());
 }
@@ -254,7 +254,7 @@ void Decoder::StopProcessorTrace(lldb::SBProcess &sbprocess,
 
 void Decoder::ReadTraceDataAndImageInfo(lldb::SBProcess &sbprocess,
                                         lldb::tid_t tid, lldb::SBError &sberror,
-                                        ThreadTraceInfo &threadTraceInfo) {
+                                        ThreadTrace &threadTraceInfo) {
   // Allocate trace data buffer and parse cpu info for 'tid' if it is registered
   // for the first time in class
   lldb::SBTrace &trace = threadTraceInfo.GetUniqueTraceInstance();
@@ -310,7 +310,7 @@ void Decoder::ReadTraceDataAndImageInfo(lldb::SBProcess &sbprocess,
 
 void Decoder::DecodeProcessorTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
                                    lldb::SBError &sberror,
-                                   ThreadTraceInfo &threadTraceInfo) {
+                                   ThreadTrace &threadTraceInfo) {
   // Initialize instruction decoder
   struct pt_insn_decoder *decoder = nullptr;
   struct pt_config config;
@@ -334,7 +334,7 @@ void Decoder::DecodeProcessorTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
   raw_current_insn.iclass = ptic_other;
   Instruction *current_insn = new Instruction(raw_current_insn);
   instruction_list.push_back(*current_insn);
-  //instruction_list.push_back(i)
+  // instruction_list.push_back(i)
 
   // reconstruct functions
   FunctionCallTreeBuilder builder(sbprocess);
@@ -343,7 +343,7 @@ void Decoder::DecodeProcessorTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
 
   // We include the current PC to be able to have the backtrace at the current
   // position
-  //builder.AppendPC(tid);
+  // builder.AppendPC(tid);
 
   threadTraceInfo.SetInstructionLog(instruction_list);
   builder.Finalize(threadTraceInfo.GetFunctionCallTree());
@@ -694,7 +694,7 @@ void Decoder::GetFunctionCallTree(
   std::lock_guard<std::mutex> guard(
       m_mapProcessUID_mapThreadID_TraceInfo_mutex);
   RemoveDeadProcessesAndThreads(sbprocess);
-  ThreadTraceInfo *threadTraceInfo = nullptr;
+  ThreadTrace *threadTraceInfo = nullptr;
   FetchAndDecode(sbprocess, tid, sberror, &threadTraceInfo);
   if (!sberror.Success()) {
     return;
@@ -710,13 +710,14 @@ void Decoder::GetFunctionCallTree(
   return;
 }
 
-void Decoder::GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, size_t &position, lldb::SBError &sberror) {
+void Decoder::GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
+                                  size_t &position, lldb::SBError &sberror) {
   sberror.Clear();
   CheckDebuggerID(sbprocess, sberror);
   if (!sberror.Success()) {
     return;
   }
-  ThreadTraceInfo *threadTraceInfo = nullptr;
+  ThreadTrace *threadTraceInfo = nullptr;
   FetchAndDecode(sbprocess, tid, sberror, &threadTraceInfo);
   if (!sberror.Success()) {
     return;
@@ -728,13 +729,14 @@ void Decoder::GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, s
   position = threadTraceInfo->GetIteratorPosition();
 }
 
-void Decoder::SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, size_t insn_index, lldb::SBError &sberror) {
+void Decoder::SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
+                                  size_t insn_index, lldb::SBError &sberror) {
   sberror.Clear();
   CheckDebuggerID(sbprocess, sberror);
   if (!sberror.Success()) {
     return;
   }
-  ThreadTraceInfo *threadTraceInfo = nullptr;
+  ThreadTrace *threadTraceInfo = nullptr;
   FetchAndDecode(sbprocess, tid, sberror, &threadTraceInfo);
   if (!sberror.Success()) {
     return;
@@ -744,7 +746,6 @@ void Decoder::SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, s
     return;
   }
   threadTraceInfo->SetIteratorPosition(insn_index, sberror);
-
 }
 
 void Decoder::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,
@@ -762,7 +763,7 @@ void Decoder::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,
       m_mapProcessUID_mapThreadID_TraceInfo_mutex);
   RemoveDeadProcessesAndThreads(sbprocess);
 
-  ThreadTraceInfo *threadTraceInfo = nullptr;
+  ThreadTrace *threadTraceInfo = nullptr;
   FetchAndDecode(sbprocess, tid, sberror, &threadTraceInfo);
   if (!sberror.Success()) {
     return;
@@ -811,7 +812,7 @@ void Decoder::GetProcessorTraceInfo(lldb::SBProcess &sbprocess, lldb::tid_t tid,
       m_mapProcessUID_mapThreadID_TraceInfo_mutex);
   RemoveDeadProcessesAndThreads(sbprocess);
 
-  ThreadTraceInfo *threadTraceInfo = nullptr;
+  ThreadTrace *threadTraceInfo = nullptr;
   FetchAndDecode(sbprocess, tid, sberror, &threadTraceInfo);
   if (!sberror.Success()) {
     return;
@@ -860,7 +861,7 @@ void Decoder::GetProcessorTraceInfo(lldb::SBProcess &sbprocess, lldb::tid_t tid,
 
 void Decoder::FetchAndDecode(lldb::SBProcess &sbprocess, lldb::tid_t tid,
                              lldb::SBError &sberror,
-                             ThreadTraceInfo **threadTraceInfo) {
+                             ThreadTrace **threadTraceInfo) {
   // Return with error if 'sbprocess' is not registered in the class
   uint32_t unique_id = sbprocess.GetUniqueID();
   auto itr_process = m_mapProcessUID_mapThreadID_TraceInfo.find(unique_id);
@@ -910,7 +911,7 @@ void Decoder::FetchAndDecode(lldb::SBProcess &sbprocess, lldb::tid_t tid,
     }
 
     lldb::SBTrace &trace = itr_thread->second.GetUniqueTraceInstance();
-    ThreadTraceInfo &trace_info = mapThreadID_TraceInfo[tid];
+    ThreadTrace &trace_info = mapThreadID_TraceInfo[tid];
     trace_info.SetUniqueTraceInstance(trace);
     trace_info.SetStopID(sbprocess.GetStopID());
     itr_thread = mapThreadID_TraceInfo.find(tid);

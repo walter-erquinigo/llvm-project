@@ -4,6 +4,7 @@ add_lldb_library(lldbIntelPTTrace
   FunctionSegment.cpp
   Instruction.cpp
   PTManager.cpp
+  ThreadTrace.cpp
 
   LINK_LIBS
     liblldb

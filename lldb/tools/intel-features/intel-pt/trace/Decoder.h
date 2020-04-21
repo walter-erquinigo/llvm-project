@@ -10,14 +10,15 @@
 #define Decoder_h_
 
 // C/C++ Includes
+#include <cassert>
 #include <map>
 #include <mutex>
 #include <string>
 #include <vector>
-#include <cassert>
 
 #include "FunctionSegment.h"
 #include "Instruction.h"
+#include "ThreadTrace.h"
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBProcess.h"
@@ -74,7 +75,6 @@ private:
 ///     - get trace specific information for a thread
 class Decoder {
 public:
-  typedef std::vector<Instruction> Instructions;
 
   Decoder(lldb::SBDebugger &sbdebugger)
       : m_mapProcessUID_mapThreadID_TraceInfo_mutex(),
@@ -99,34 +99,16 @@ public:
                                  InstructionList &result_list,
                                  lldb::SBError &sberror);
 
-  void GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, size_t &insn_index, lldb::SBError &sberror);
+  void GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
+                           size_t &insn_index, lldb::SBError &sberror);
 
-  void SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, size_t insn_index, lldb::SBError &sberror);
+  void SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
+                           size_t insn_index, lldb::SBError &sberror);
 
   void GetProcessorTraceInfo(lldb::SBProcess &sbprocess, lldb::tid_t tid,
                              TraceOptions &traceinfo, lldb::SBError &sberror);
 
 private:
-  class ThreadTraceInfo;
-  typedef std::vector<uint8_t> Buffer;
-
-  // internal class to manage inferior's read-execute section information
-  class ReadExecuteSectionInfo {
-  public:
-    uint64_t load_address;
-    uint64_t file_offset;
-    uint64_t size;
-    std::string image_path;
-
-    ReadExecuteSectionInfo(const uint64_t addr, const uint64_t offset,
-                           const uint64_t sz, const std::string &path)
-        : load_address(addr), file_offset(offset), size(sz), image_path(path) {}
-
-    ReadExecuteSectionInfo(const ReadExecuteSectionInfo &rxsection) = default;
-  };
-
-  typedef struct pt_cpu CPUInfo;
-  typedef std::vector<ReadExecuteSectionInfo> ReadExecuteSectionInfos;
 
   // Check whether the provided SBProcess belongs to the same SBDebugger with
   // which Decoder class instance was constructed.
@@ -147,20 +129,19 @@ private:
   ///  ReadTraceDataAndImageInfo()) and decodes the trace (using
   ///  DecodeProcessorTrace())
   void FetchAndDecode(lldb::SBProcess &sbprocess, lldb::tid_t tid,
-                      lldb::SBError &sberror,
-                      ThreadTraceInfo **threadTraceInfo);
+                      lldb::SBError &sberror, ThreadTrace **threadTraceInfo);
 
   // Helper function of FetchAndDecode() to get raw trace data and memory image
   // info of inferior from LLDB
   void ReadTraceDataAndImageInfo(lldb::SBProcess &sbprocess, lldb::tid_t tid,
                                  lldb::SBError &sberror,
-                                 ThreadTraceInfo &threadTraceInfo);
+                                 ThreadTrace &threadTraceInfo);
 
   // Helper function of FetchAndDecode() to initialize raw trace decoder and
   // start trace decoding
   void DecodeProcessorTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
                             lldb::SBError &sberror,
-                            ThreadTraceInfo &threadTraceInfo);
+                            ThreadTrace &threadTraceInfo);
 
   // Helper function of ReadTraceDataAndImageInfo() function for gathering
   // inferior's memory image info along with all dynamic libraries linked with
@@ -183,72 +164,7 @@ private:
   int HandlePTInstructionEvents(pt_insn_decoder *decoder, int errcode,
                                 Instructions &instruction_list);
 
-  class ThreadTraceInfo {
-  public:
-    ThreadTraceInfo()
-        : m_pt_buffer(), m_readExecuteSectionInfos(), m_thread_stop_id(0),
-          m_trace(), m_pt_cpu(), m_instruction_log(), m_insn_position(0) {}
-
-    ThreadTraceInfo(const ThreadTraceInfo &trace_info) = default;
-
-    ~ThreadTraceInfo() {}
-
-    Buffer &GetPTBuffer() { return m_pt_buffer; }
-
-    void AllocatePTBuffer(uint64_t size) { m_pt_buffer.assign(size, 0); }
-
-    ReadExecuteSectionInfos &GetReadExecuteSectionInfos() {
-      return m_readExecuteSectionInfos;
-    }
-
-    CPUInfo &GetCPUInfo() { return m_pt_cpu; }
-
-    const Instructions &GetInstructionLog() { return m_instruction_log; }
-
-    void SetInstructionLog(Instructions& instruction_log) {
-      m_instruction_log = std::move(instruction_log);
-      assert(!m_instruction_log.empty());
-      m_insn_position = m_instruction_log.size() - 1;
-    }
-
-    std::vector<std::shared_ptr<FunctionSegment>> &GetFunctionCallTree() {
-      return m_function_call_tree;
-    }
-
-    uint32_t GetStopID() const { return m_thread_stop_id; }
-
-    void SetStopID(uint32_t stop_id) { m_thread_stop_id = stop_id; }
-
-    lldb::SBTrace &GetUniqueTraceInstance() { return m_trace; }
-
-    void SetUniqueTraceInstance(lldb::SBTrace &trace) { m_trace = trace; }
-
-    size_t GetIteratorPosition() { return m_insn_position; }
-
-    void SetIteratorPosition(size_t position, lldb::SBError &sberror) {
-      if (position > m_instruction_log.size()) {
-        sberror.SetErrorString("Position is beyond the trace size");
-        return;
-      }
-      m_insn_position = position;
-     }
-
-    friend class Decoder;
-
-  private:
-    Buffer m_pt_buffer; // raw trace buffer
-    ReadExecuteSectionInfos
-        m_readExecuteSectionInfos; // inferior's memory image info
-    uint32_t m_thread_stop_id;     // stop id for thread
-    lldb::SBTrace m_trace; // unique tracing instance of a thread/process
-    CPUInfo m_pt_cpu; // cpu info of the target on which inferior is running
-    Instructions m_instruction_log; // complete instruction log
-    std::vector<std::shared_ptr<FunctionSegment>>
-        m_function_call_tree; // complete function call tree
-    size_t m_insn_position; // position of the instruction iterator
-  };
-
-  typedef std::map<lldb::user_id_t, ThreadTraceInfo> MapThreadID_TraceInfo;
+  typedef std::map<lldb::user_id_t, ThreadTrace> MapThreadID_TraceInfo;
   typedef std::map<uint32_t, MapThreadID_TraceInfo>
       MapProcessUID_MapThreadID_TraceInfo;
 
