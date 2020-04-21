@@ -355,10 +355,6 @@ public:
 
   RegisterContext *GetRegisterContext() const;
 
-  void SetExecutionTrace(const lldb::ExecutionTraceSP &trace);
-
-  lldb::ExecutionTraceSP GetExecutionTrace() const;
-
   ExecutionContextScope *GetBestExecutionContextScope() const;
 
   uint32_t GetAddressByteSize() const;
@@ -565,7 +561,6 @@ protected:
   lldb::ProcessSP m_process_sp;  ///< The process that owns the thread/frame
   lldb::ThreadSP m_thread_sp;    ///< The thread that owns the frame
   lldb::StackFrameSP m_frame_sp; ///< The stack frame in thread.
-  lldb::ExecutionTraceSP m_execution_trace_sp;
 };
 
 } // namespace lldb_private

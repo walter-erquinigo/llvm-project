@@ -8,7 +8,6 @@
 
 #include "Decoder.h"
 #include "FunctionCallTreeBuilder.h"
-#include "ThreadExecutionTrace.h"
 
 // C/C++ Includes
 #include <cassert>
@@ -150,15 +149,6 @@ void Decoder::StartProcessorTrace(lldb::SBProcess &sbprocess,
   ThreadTraceInfo &trace_info = mapThreadID_TraceInfo[tid];
   trace_info.SetUniqueTraceInstance(trace);
   trace_info.SetStopID(sbprocess.GetStopID());
-
-  auto thread_execution_trace = new ThreadExecutionTrace(this);
-  if (tid == LLDB_INVALID_THREAD_ID) {
-    for (size_t i = 0; i < sbprocess.GetNumThreads(); i++) {
-      sbprocess.GetThreadAtIndex(i).SetExecutionTrace(thread_execution_trace);
-    }
-  } else {
-    sbprocess.GetThreadByID(tid).SetExecutionTrace(thread_execution_trace);
-  }
 }
 
 void Decoder::StopProcessorTrace(lldb::SBProcess &sbprocess,
@@ -335,9 +325,16 @@ void Decoder::DecodeProcessorTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
     return;
 
   // Start raw trace decoding
-  Instructions &instruction_list = threadTraceInfo.GetInstructionLog();
-  instruction_list.clear();
+  Instructions instruction_list;
   DecodeTrace(decoder, instruction_list);
+  // Append PC
+  pt_insn raw_current_insn;
+  raw_current_insn.ip = sbprocess.GetThreadByID(tid).GetFrameAtIndex(0).GetPC();
+  raw_current_insn.size = 1; // fake
+  raw_current_insn.iclass = ptic_other;
+  Instruction *current_insn = new Instruction(raw_current_insn);
+  instruction_list.push_back(*current_insn);
+  //instruction_list.push_back(i)
 
   // reconstruct functions
   FunctionCallTreeBuilder builder(sbprocess);
@@ -346,8 +343,9 @@ void Decoder::DecodeProcessorTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
 
   // We include the current PC to be able to have the backtrace at the current
   // position
-  builder.AppendPC(tid);
+  //builder.AppendPC(tid);
 
+  threadTraceInfo.SetInstructionLog(instruction_list);
   builder.Finalize(threadTraceInfo.GetFunctionCallTree());
 }
 
@@ -712,6 +710,43 @@ void Decoder::GetFunctionCallTree(
   return;
 }
 
+void Decoder::GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, size_t &position, lldb::SBError &sberror) {
+  sberror.Clear();
+  CheckDebuggerID(sbprocess, sberror);
+  if (!sberror.Success()) {
+    return;
+  }
+  ThreadTraceInfo *threadTraceInfo = nullptr;
+  FetchAndDecode(sbprocess, tid, sberror, &threadTraceInfo);
+  if (!sberror.Success()) {
+    return;
+  }
+  if (threadTraceInfo == nullptr) {
+    sberror.SetErrorStringWithFormat("internal error");
+    return;
+  }
+  position = threadTraceInfo->GetIteratorPosition();
+}
+
+void Decoder::SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, size_t insn_index, lldb::SBError &sberror) {
+  sberror.Clear();
+  CheckDebuggerID(sbprocess, sberror);
+  if (!sberror.Success()) {
+    return;
+  }
+  ThreadTraceInfo *threadTraceInfo = nullptr;
+  FetchAndDecode(sbprocess, tid, sberror, &threadTraceInfo);
+  if (!sberror.Success()) {
+    return;
+  }
+  if (threadTraceInfo == nullptr) {
+    sberror.SetErrorStringWithFormat("internal error");
+    return;
+  }
+  threadTraceInfo->SetIteratorPosition(insn_index, sberror);
+
+}
+
 void Decoder::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,
                                         lldb::tid_t tid, uint32_t offset,
                                         uint32_t count,
@@ -738,7 +773,7 @@ void Decoder::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,
   }
 
   // Return instruction log by populating 'result_list'
-  Instructions &insn_list = threadTraceInfo->GetInstructionLog();
+  const Instructions &insn_list = threadTraceInfo->GetInstructionLog();
   uint64_t sum = (uint64_t)offset + 1;
   if (((insn_list.size() <= offset) && (count <= sum) &&
        ((sum - count) >= insn_list.size())) ||
@@ -750,13 +785,13 @@ void Decoder::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,
     return;
   }
 
-  Instructions::iterator itr_first =
+  Instructions::const_iterator itr_first =
       (insn_list.size() <= offset) ? insn_list.begin()
                                    : insn_list.begin() + insn_list.size() - sum;
-  Instructions::iterator itr_last =
+  Instructions::const_iterator itr_last =
       (count <= sum) ? insn_list.begin() + insn_list.size() - (sum - count)
                      : insn_list.end();
-  Instructions::iterator itr = itr_first;
+  Instructions::const_iterator itr = itr_first;
   while (itr != itr_last) {
     result_list.AppendInstruction(*itr);
     ++itr;

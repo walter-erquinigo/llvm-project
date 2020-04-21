@@ -234,7 +234,7 @@ Thread::Thread(Process &process, lldb::tid_t tid, bool use_invalid_index_id)
       m_resume_state(eStateRunning), m_temporary_resume_state(eStateRunning),
       m_unwinder_up(), m_destroy_called(false),
       m_override_should_notify(eLazyBoolCalculate),
-      m_extended_info_fetched(false), m_extended_info(), m_is_direction_reverse(false) {
+      m_extended_info_fetched(false), m_extended_info() {
   Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_OBJECT));
   LLDB_LOGF(log, "%p Thread::Thread(tid = 0x%4.4" PRIx64 ")",
             static_cast<void *>(this), GetID());
@@ -985,7 +985,7 @@ Vote Thread::ShouldReportStop(Event *event_ptr) {
   }
 
   if (GetPlans().AnyCompletedPlans()) {
-    // Pass skip_private = false to GetCompletedPlan, since we want to ask
+    // Pass skip_private = false to GetCompletedPlan, since we want to ask 
     // the last plan, regardless of whether it is private or not.
     LLDB_LOGF(log,
               "Thread::ShouldReportStop() tid = 0x%4.4" PRIx64
@@ -1023,7 +1023,7 @@ Vote Thread::ShouldReportRun(Event *event_ptr) {
 
   Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_STEP));
   if (GetPlans().AnyCompletedPlans()) {
-    // Pass skip_private = false to GetCompletedPlan, since we want to ask
+    // Pass skip_private = false to GetCompletedPlan, since we want to ask 
     // the last plan, regardless of whether it is private or not.
     LLDB_LOGF(log,
               "Current Plan for thread %d(%p) (0x%4.4" PRIx64
@@ -1076,7 +1076,7 @@ void Thread::PushPlan(ThreadPlanSP thread_plan_sp) {
               static_cast<void *>(this), s.GetData(),
               thread_plan_sp->GetThread().GetID());
   }
-
+  
   GetPlans().PushPlan(std::move(thread_plan_sp));
 }
 
@@ -1094,7 +1094,7 @@ void Thread::DiscardPlan() {
   ThreadPlanSP discarded_plan_sp = GetPlans().PopPlan();
 
   LLDB_LOGF(log, "Discarding plan: \"%s\", tid = 0x%4.4" PRIx64 ".",
-            discarded_plan_sp->GetName(),
+            discarded_plan_sp->GetName(), 
             discarded_plan_sp->GetThread().GetID());
 }
 
@@ -1215,7 +1215,7 @@ Status Thread::UnwindInnermostExpression() {
   if (!innermost_expr_plan) {
     error.SetErrorString("No expressions currently active on this thread");
     return error;
-  }
+  }  
   DiscardThreadPlansUpToPlan(innermost_expr_plan);
   return error;
 }
@@ -1230,20 +1230,6 @@ ThreadPlanSP Thread::QueueThreadPlanForStepSingleInstruction(
     bool step_over, bool abort_other_plans, bool stop_other_threads,
     Status &status) {
   ThreadPlanSP thread_plan_sp(new ThreadPlanStepInstruction(
-      *this, step_over, stop_other_threads, eVoteNoOpinion, eVoteNoOpinion));
-  status = QueueThreadPlan(thread_plan_sp, abort_other_plans);
-  return thread_plan_sp;
-}
-
-ExecutionTraceSP Thread::GetExecutionTrace() {
-  ExecutionContext exe_ctx(shared_from_this());
-  return exe_ctx.GetExecutionTrace();
-}
-
-ThreadPlanSP Thread::QueueThreadPlanForReverseStepSingleInstruction(
-    bool step_over, bool abort_other_plans, bool stop_other_threads,
-    Status &status) {
-  ThreadPlanSP thread_plan_sp(new ThreadPlanReverseStepInstruction(
       *this, step_over, stop_other_threads, eVoteNoOpinion, eVoteNoOpinion));
   status = QueueThreadPlan(thread_plan_sp, abort_other_plans);
   return thread_plan_sp;
@@ -1377,17 +1363,17 @@ ThreadPlanSP Thread::QueueThreadPlanForStepUntil(
 }
 
 lldb::ThreadPlanSP Thread::QueueThreadPlanForStepScripted(
-    bool abort_other_plans, const char *class_name,
+    bool abort_other_plans, const char *class_name, 
     StructuredData::ObjectSP extra_args_sp,  bool stop_other_threads,
     Status &status) {
-
-  StructuredDataImpl *extra_args_impl = nullptr;
+    
+  StructuredDataImpl *extra_args_impl = nullptr; 
   if (extra_args_sp) {
     extra_args_impl = new StructuredDataImpl();
     extra_args_impl->SetObjectSP(extra_args_sp);
   }
 
-  ThreadPlanSP thread_plan_sp(new ThreadPlanPython(*this, class_name,
+  ThreadPlanSP thread_plan_sp(new ThreadPlanPython(*this, class_name, 
                                                    extra_args_impl));
 
   status = QueueThreadPlan(thread_plan_sp, abort_other_plans);

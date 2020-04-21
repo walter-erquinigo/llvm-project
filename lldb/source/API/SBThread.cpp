@@ -29,7 +29,6 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/SymbolContext.h"
-#include "lldb/Target/ExecutionTrace.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Queue.h"
 #include "lldb/Target/StopInfo.h"
@@ -515,35 +514,6 @@ SBError SBThread::ResumeNewPlan(ExecutionContext &exe_ctx,
 
   return sb_error;
 }
-
-class ExecutionTraceImplementation: public lldb_private::ExecutionTrace {
-  public:
-   ExecutionTraceImplementation(lldb::SBExecutionTracePluginInterface *execution_trace): m_backend(execution_trace) {}
-
-  bool CanDoReverse() {
-    return m_backend->CanDoReverse();
-  }
-
-  protected:
-   std::shared_ptr<lldb::SBExecutionTracePluginInterface> m_backend;
-};
-
-void SBThread::SetExecutionTrace(lldb::SBExecutionTracePluginInterface *execution_trace) {
-  std::unique_lock<std::recursive_mutex> lock;
-  ExecutionContext exe_ctx(m_opaque_sp.get(), lock);
-  ExecutionTraceSP execution_trace_sp = std::make_shared<ExecutionTraceImplementation>(execution_trace);
-
-  exe_ctx.SetExecutionTrace(execution_trace_sp);
-}
-
-bool SBThread::SupportReverseStepping() {
-  std::unique_lock<std::recursive_mutex> lock;
-  ExecutionContext exe_ctx(m_opaque_sp.get(), lock);
-
-  ExecutionTraceSP trace = exe_ctx.GetExecutionTrace();
-  return !trace ? false : trace->CanDoReverse();
-}
-
 
 void SBThread::StepOver(lldb::RunMode stop_other_threads) {
   LLDB_RECORD_METHOD(void, SBThread, StepOver, (lldb::RunMode),

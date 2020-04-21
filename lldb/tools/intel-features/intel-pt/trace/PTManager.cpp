@@ -179,7 +179,7 @@ void PTManager::GetFunctionCallTree(lldb::SBProcess &sbprocess, lldb::tid_t tid,
                                     PTFunctionCallTree &call_tree,
                                     lldb::SBError &sberror) {
   if (m_opaque_sp == nullptr) {
-    sberror.SetErrorStringWithFormat("invalid PTManager instance");
+    sberror.SetErrorString("invalid PTManager instance");
     return;
   }
 
@@ -191,6 +191,22 @@ void PTManager::GetFunctionCallTree(lldb::SBProcess &sbprocess, lldb::tid_t tid,
   if (!sberror.Success())
     return;
   call_tree.SetSP(call_tree_ptr);
+}
+
+void PTManager::GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, size_t &position, lldb::SBError &sberror) {
+  if (m_opaque_sp == nullptr) {
+    sberror.SetErrorString("invalid PTManager instance");
+    return;
+  }
+  m_opaque_sp->GetIteratorPosition(sbprocess, tid, position, sberror);
+}
+
+void PTManager::SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, size_t insn_index, lldb::SBError &sberror) {
+  if (m_opaque_sp == nullptr) {
+    sberror.SetErrorString("invalid PTManager instance");
+    return;
+  }
+  m_opaque_sp->SetIteratorPosition(sbprocess, tid, insn_index, sberror);
 }
 
 void PTManager::GetProcessorTraceInfo(lldb::SBProcess &sbprocess,

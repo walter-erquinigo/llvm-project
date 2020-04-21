@@ -14,6 +14,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <cassert>
 
 #include "FunctionSegment.h"
 #include "Instruction.h"
@@ -97,6 +98,10 @@ public:
                                  uint32_t offset, uint32_t count,
                                  InstructionList &result_list,
                                  lldb::SBError &sberror);
+
+  void GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, size_t &insn_index, lldb::SBError &sberror);
+
+  void SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid, size_t insn_index, lldb::SBError &sberror);
 
   void GetProcessorTraceInfo(lldb::SBProcess &sbprocess, lldb::tid_t tid,
                              TraceOptions &traceinfo, lldb::SBError &sberror);
@@ -182,7 +187,7 @@ private:
   public:
     ThreadTraceInfo()
         : m_pt_buffer(), m_readExecuteSectionInfos(), m_thread_stop_id(0),
-          m_trace(), m_pt_cpu(), m_instruction_log() {}
+          m_trace(), m_pt_cpu(), m_instruction_log(), m_insn_position(0) {}
 
     ThreadTraceInfo(const ThreadTraceInfo &trace_info) = default;
 
@@ -198,7 +203,13 @@ private:
 
     CPUInfo &GetCPUInfo() { return m_pt_cpu; }
 
-    Instructions &GetInstructionLog() { return m_instruction_log; }
+    const Instructions &GetInstructionLog() { return m_instruction_log; }
+
+    void SetInstructionLog(Instructions& instruction_log) {
+      m_instruction_log = std::move(instruction_log);
+      assert(!m_instruction_log.empty());
+      m_insn_position = m_instruction_log.size() - 1;
+    }
 
     std::vector<std::shared_ptr<FunctionSegment>> &GetFunctionCallTree() {
       return m_function_call_tree;
@@ -212,6 +223,16 @@ private:
 
     void SetUniqueTraceInstance(lldb::SBTrace &trace) { m_trace = trace; }
 
+    size_t GetIteratorPosition() { return m_insn_position; }
+
+    void SetIteratorPosition(size_t position, lldb::SBError &sberror) {
+      if (position > m_instruction_log.size()) {
+        sberror.SetErrorString("Position is beyond the trace size");
+        return;
+      }
+      m_insn_position = position;
+     }
+
     friend class Decoder;
 
   private:
@@ -224,6 +245,7 @@ private:
     Instructions m_instruction_log; // complete instruction log
     std::vector<std::shared_ptr<FunctionSegment>>
         m_function_call_tree; // complete function call tree
+    size_t m_insn_position; // position of the instruction iterator
   };
 
   typedef std::map<lldb::user_id_t, ThreadTraceInfo> MapThreadID_TraceInfo;

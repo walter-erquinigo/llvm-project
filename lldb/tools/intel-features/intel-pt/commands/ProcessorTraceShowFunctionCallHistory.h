@@ -25,7 +25,6 @@ public:
 
 private:
   std::shared_ptr<intelpt::PTManager> pt_decoder_sp;
-  const uint32_t m_default_count = 10;
 };
 
 #endif // LLDB_TOOLS_INTEL_PT_PROCESSOR_TRACE_SHOW_FUNCTION_CALL_HISTORY_LOG_H

@@ -10,7 +10,6 @@ add_lldb_library(lldbTarget
   ABI.cpp
   AssertFrameRecognizer.cpp
   ExecutionContext.cpp
-  ExecutionTrace.cpp
   InstrumentationRuntime.cpp
   InstrumentationRuntimeStopInfo.cpp
   JITLoader.cpp

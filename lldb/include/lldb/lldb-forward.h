@@ -83,7 +83,6 @@ class EventData;
 class EventDataStructuredData;
 class ExecutionContext;
 class ExecutionContextRef;
-class ExecutionTrace;
 class ExecutionContextScope;
 class Expression;
 class ExpressionTypeSystemHelper;
@@ -317,7 +316,6 @@ typedef std::shared_ptr<lldb_private::EventDataStructuredData>
     EventDataStructuredDataSP;
 typedef std::shared_ptr<lldb_private::ExecutionContextRef>
     ExecutionContextRefSP;
-typedef std::shared_ptr<lldb_private::ExecutionTrace> ExecutionTraceSP;
 typedef std::shared_ptr<lldb_private::ExpressionVariable> ExpressionVariableSP;
 typedef std::unique_ptr<lldb_private::File> FileUP;
 typedef std::shared_ptr<lldb_private::File> FileSP;

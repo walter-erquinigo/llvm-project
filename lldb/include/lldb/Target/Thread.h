@@ -621,11 +621,6 @@ public:
       bool step_over, bool abort_other_plans, bool stop_other_threads,
       Status &status);
 
-  /// If step_over is false, we enter into a function call
-  virtual lldb::ThreadPlanSP QueueThreadPlanForReverseStepSingleInstruction(
-      bool step_over, bool abort_other_plans, bool stop_other_threads,
-      Status &status);
-
   /// Queues the plan used to step through an address range, stepping  over
   /// function calls.
   ///
@@ -1169,8 +1164,6 @@ public:
 
   lldb::ThreadSP GetCurrentExceptionBacktrace();
 
-  lldb::ExecutionTraceSP GetExecutionTrace();
-
 protected:
   friend class ThreadPlan;
   friend class ThreadList;
@@ -1263,8 +1256,6 @@ private:
   bool m_extended_info_fetched; // Have we tried to retrieve the m_extended_info
                                 // for this thread?
   StructuredData::ObjectSP m_extended_info; // The extended info for this thread
-
-  bool m_is_direction_reverse;
 
 private:
   void BroadcastSelectedFrameChange(StackID &new_frame_id);

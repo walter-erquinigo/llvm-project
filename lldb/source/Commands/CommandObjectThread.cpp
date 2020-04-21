@@ -2054,11 +2054,11 @@ public:
 
   bool DoExecute(Args &args, CommandReturnObject &result) override {
     Process *process = m_exe_ctx.GetProcessPtr();
-
+    
     if (args.GetArgumentCount() == 0) {
       process->PruneThreadPlans();
       result.SetStatus(eReturnStatusSuccessFinishNoResult);
-      return true;
+      return true;  
     }
 
     const size_t num_args = args.GetArgumentCount();

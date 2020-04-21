@@ -1,5 +1,6 @@
 add_lldb_library(lldbIntelPTCommands
   CommandUtils.cpp
+  ProcessorTraceGoTo.cpp
   ProcessorTraceShowFunctionCallHistory.cpp
   ProcessorTraceShowInstrLog.cpp
   ProcessorTraceShowTraceOptions.cpp
