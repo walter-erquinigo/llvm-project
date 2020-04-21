@@ -243,6 +243,14 @@ StackFrame &ExecutionContext::GetFrameRef() const {
   return *m_frame_sp;
 }
 
+void ExecutionContext::SetExecutionTrace(const lldb::ExecutionTraceSP &trace_sp) {
+  m_execution_trace_sp = trace_sp;
+}
+
+lldb::ExecutionTraceSP ExecutionContext::GetExecutionTrace() const {
+  return m_execution_trace_sp;
+}
+
 void ExecutionContext::SetTargetSP(const lldb::TargetSP &target_sp) {
   m_target_sp = target_sp;
 }

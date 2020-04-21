@@ -17,6 +17,13 @@ namespace lldb {
 
 class SBFrame;
 
+class SBExecutionTracePluginInterface {
+public:
+  virtual ~SBExecutionTracePluginInterface() = default;
+
+  virtual bool CanDoReverse() = 0;
+};
+
 class LLDB_API SBThread {
 public:
   enum {
@@ -89,6 +96,10 @@ public:
   lldb::queue_id_t GetQueueID() const;
 
   bool GetInfoItemByPathAsString(const char *path, SBStream &strm);
+
+  void SetExecutionTrace(lldb::SBExecutionTracePluginInterface *execution_trace);
+
+  bool SupportReverseStepping();
 
   void StepOver(lldb::RunMode stop_other_threads = lldb::eOnlyDuringStepping);
 

@@ -8,6 +8,7 @@
 
 #include "Decoder.h"
 #include "FunctionCallTreeBuilder.h"
+#include "ThreadExecutionTrace.h"
 
 // C/C++ Includes
 #include <cassert>
@@ -149,6 +150,15 @@ void Decoder::StartProcessorTrace(lldb::SBProcess &sbprocess,
   ThreadTraceInfo &trace_info = mapThreadID_TraceInfo[tid];
   trace_info.SetUniqueTraceInstance(trace);
   trace_info.SetStopID(sbprocess.GetStopID());
+
+  auto thread_execution_trace = new ThreadExecutionTrace(this);
+  if (tid == LLDB_INVALID_THREAD_ID) {
+    for (size_t i = 0; i < sbprocess.GetNumThreads(); i++) {
+      sbprocess.GetThreadAtIndex(i).SetExecutionTrace(thread_execution_trace);
+    }
+  } else {
+    sbprocess.GetThreadByID(tid).SetExecutionTrace(thread_execution_trace);
+  }
 }
 
 void Decoder::StopProcessorTrace(lldb::SBProcess &sbprocess,

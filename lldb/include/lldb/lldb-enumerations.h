@@ -244,7 +244,7 @@ enum StopReason {
   eStopReasonExec, ///< Program was re-exec'ed
   eStopReasonPlanComplete,
   eStopReasonThreadExiting,
-  eStopReasonInstrumentation
+  eStopReasonInstrumentation,
 };
 
 /// Command Return Status Types.

@@ -40,6 +40,7 @@ class LLDB_API SBError;
 class LLDB_API SBEvent;
 class LLDB_API SBEventList;
 class LLDB_API SBExecutionContext;
+class LLDB_API SBExecutionTracePluginInterface;
 class LLDB_API SBExpressionOptions;
 class LLDB_API SBFile;
 class LLDB_API SBFileSpec;
