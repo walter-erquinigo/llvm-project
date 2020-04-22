@@ -22,10 +22,10 @@
 
 namespace intelpt_private {
 class Instruction;
-class InstructionList;
 class TraceOptions;
 class Decoder;
 class FunctionSegment;
+class ThreadTrace;
 } // namespace intelpt_private
 
 namespace intelpt {
@@ -94,9 +94,10 @@ public:
 private:
   friend class PTManager;
 
-  void SetSP(const std::shared_ptr<intelpt_private::InstructionList> &ptr);
+  void
+  SetSP(const std::shared_ptr<std::vector<intelpt_private::Instruction>> &ptr);
 
-  std::shared_ptr<intelpt_private::InstructionList> m_opaque_sp;
+  std::shared_ptr<std::vector<intelpt_private::Instruction>> m_opaque_sp;
 };
 
 class PTFunctionSegment {
@@ -120,20 +121,35 @@ private:
 
 class PTFunctionCallTree {
 public:
+  PTFunctionCallTree();
+
   PTFunctionSegment GetFunctionSegmentAtIndex(size_t index) const;
 
   size_t GetSize() const;
 
 private:
+  friend class PTThreadTrace;
+
+  void
+  SetPtr(std::vector<std::shared_ptr<intelpt_private::FunctionSegment>> *ptr);
+
+  std::vector<std::shared_ptr<intelpt_private::FunctionSegment>> *m_opaque_ptr;
+};
+
+class PTThreadTrace {
+public:
+  PTFunctionCallTree GetFunctionCallTree();
+
+  size_t GetPosition();
+
+  void SetPosition(size_t insn_index, lldb::SBError &sberror);
+
+private:
   friend class PTManager;
 
-  void SetSP(std::shared_ptr<
-             std::vector<std::shared_ptr<intelpt_private::FunctionSegment>>>
-                 ptr);
+  void SetPtr(intelpt_private::ThreadTrace *ptr);
 
-  std::shared_ptr<
-      std::vector<std::shared_ptr<intelpt_private::FunctionSegment>>>
-      m_opaque_sp;
+  intelpt_private::ThreadTrace *m_opaque_ptr;
 };
 
 /// \class PTTraceOptions
@@ -279,15 +295,8 @@ public:
                                  PTInstructionList &result_list,
                                  lldb::SBError &sberror);
 
-  void GetFunctionCallTree(lldb::SBProcess &sbprocess, lldb::tid_t tid,
-                           PTFunctionCallTree &call_tree,
-                           lldb::SBError &sberror);
-
-  void GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
-                           size_t &insn_index, lldb::SBError &sberror);
-
-  void SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
-                           size_t insn_index, lldb::SBError &sberror);
+  PTThreadTrace GetThreadTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
+                               lldb::SBError &sberror);
 
   /// Get Intel(R) Processor Trace specific information for a thread of a
   /// process. The information contains the actual configuration options with

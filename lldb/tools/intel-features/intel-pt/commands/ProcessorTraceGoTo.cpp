@@ -19,7 +19,7 @@ bool ProcessorTraceGoTo::DoExecute(lldb::SBDebugger debugger, char **command,
     return false;
 
   // Default initialize API's arguments
-  size_t insn_index;
+  size_t position;
   lldb::tid_t thread_id;
 
   // Parse command line options
@@ -31,7 +31,7 @@ bool ProcessorTraceGoTo::DoExecute(lldb::SBDebugger debugger, char **command,
         if (!ParseCommandArgThread(command, result, process, i, thread_id))
           return false;
       } else {
-        if (!ParseCommandOption2(command, result, i, llvm::None, insn_index))
+        if (!ParseCommandOption2(command, result, i, llvm::None, position))
           return false;
       }
     }
@@ -47,19 +47,25 @@ bool ProcessorTraceGoTo::DoExecute(lldb::SBDebugger debugger, char **command,
     thread_id = thread.GetThreadID();
   }
 
-  size_t pos;
   lldb::SBError error;
-  pt_decoder_sp->GetIteratorPosition(process, thread_id, pos, error);
-  printf("before position %zu\n", pos);
-  pt_decoder_sp->SetIteratorPosition(process, thread_id, insn_index, error);
+  intelpt::PTThreadTrace thread_trace =
+      pt_decoder_sp->GetThreadTrace(process, thread_id, error);
   if (!error.Success()) {
     result.AppendMessage(error.GetCString());
     result.SetStatus(lldb::eReturnStatusFailed);
     return false;
   }
 
-  pt_decoder_sp->GetIteratorPosition(process, thread_id, pos, error);
-  printf("after position %zu\n", pos);
+  printf("before position %zu\n", thread_trace.GetPosition());
+  thread_trace.SetPosition(position, error);
+  if (!error.Success()) {
+    result.AppendMessage(error.GetCString());
+    result.SetStatus(lldb::eReturnStatusFailed);
+    return false;
+  }
+
+  printf("after position %zu\n", thread_trace.GetPosition());
+
   result.SetStatus(lldb::eReturnStatusSuccessFinishResult);
   return true;
 }

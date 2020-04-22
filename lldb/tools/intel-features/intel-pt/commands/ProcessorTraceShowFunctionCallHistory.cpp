@@ -29,10 +29,10 @@ bool ProcessorTraceShowFunctionCallHistory::DoExecute(
     return false;
   }
 
-  PTFunctionCallTree call_tree;
   SBError error;
-  pt_decoder_sp->GetFunctionCallTree(process, thread.GetThreadID(), call_tree,
-                                     error);
+
+  PTThreadTrace thread_trace =
+      pt_decoder_sp->GetThreadTrace(process, thread.GetThreadID(), error);
 
   if (!error.Success()) {
     result.Printf("thread #%" PRIu32 ": tid=%" PRIu64 ", error: %s",
@@ -41,6 +41,8 @@ bool ProcessorTraceShowFunctionCallHistory::DoExecute(
     result.SetStatus(eReturnStatusFailed);
     return false;
   }
+
+  PTFunctionCallTree call_tree = thread_trace.GetFunctionCallTree();
 
   SBTarget target = debugger.GetSelectedTarget();
   const char *yellowColor = "\e[33m";

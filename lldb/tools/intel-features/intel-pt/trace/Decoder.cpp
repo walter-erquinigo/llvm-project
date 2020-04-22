@@ -79,7 +79,6 @@ void Decoder::RemoveDeadProcessesAndThreads(lldb::SBProcess &sbprocess) {
 void Decoder::StartProcessorTrace(lldb::SBProcess &sbprocess,
                                   lldb::SBTraceOptions &sbtraceoptions,
                                   lldb::SBError &sberror) {
-  sberror.Clear();
   CheckDebuggerID(sbprocess, sberror);
   if (!sberror.Success())
     return;
@@ -325,7 +324,7 @@ void Decoder::DecodeProcessorTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
     return;
 
   // Start raw trace decoding
-  Instructions instruction_list;
+  InstructionList instruction_list;
   DecodeTrace(decoder, instruction_list);
   // Append PC
   pt_insn raw_current_insn;
@@ -588,7 +587,7 @@ void Decoder::InitializePTInstDecoder(
 }
 
 int Decoder::HandlePTInstructionEvents(pt_insn_decoder *decoder, int errcode,
-                                       Instructions &instruction_list) {
+                                       InstructionList &instruction_list) {
   while (errcode & pts_event_pending) {
     pt_event event;
     errcode = pt_insn_event(decoder, &event, sizeof(event));
@@ -609,7 +608,7 @@ int Decoder::HandlePTInstructionEvents(pt_insn_decoder *decoder, int errcode,
 
 // Start actual decoding of raw trace
 void Decoder::DecodeTrace(struct pt_insn_decoder *decoder,
-                          Instructions &instruction_list) {
+                          InstructionList &instruction_list) {
   uint64_t decoder_offset = 0;
 
   while (1) {
@@ -682,121 +681,33 @@ void Decoder::DecodeTrace(struct pt_insn_decoder *decoder,
   }
 }
 
-void Decoder::GetFunctionCallTree(
-    lldb::SBProcess &sbprocess, lldb::tid_t tid,
-    std::vector<std::shared_ptr<FunctionSegment>> &result_list,
-    lldb::SBError &sberror) {
+ThreadTrace *Decoder::GetThreadTrace(lldb::SBProcess &sbprocess,
+                                     lldb::tid_t tid, lldb::SBError &sberror) {
+  ThreadTrace *thread_trace = nullptr;
   sberror.Clear();
   CheckDebuggerID(sbprocess, sberror);
-  if (!sberror.Success()) {
-    return;
-  }
-  std::lock_guard<std::mutex> guard(
-      m_mapProcessUID_mapThreadID_TraceInfo_mutex);
-  RemoveDeadProcessesAndThreads(sbprocess);
-  ThreadTrace *threadTraceInfo = nullptr;
-  FetchAndDecode(sbprocess, tid, sberror, &threadTraceInfo);
-  if (!sberror.Success()) {
-    return;
-  }
-  if (threadTraceInfo == nullptr) {
-    sberror.SetErrorStringWithFormat("internal error");
-    return;
-  }
-  std::vector<std::shared_ptr<FunctionSegment>> &call_tree =
-      threadTraceInfo->GetFunctionCallTree();
-  result_list.reserve(call_tree.size());
-  result_list.assign(call_tree.begin(), call_tree.end());
-  return;
-}
-
-void Decoder::GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
-                                  size_t &position, lldb::SBError &sberror) {
-  sberror.Clear();
-  CheckDebuggerID(sbprocess, sberror);
-  if (!sberror.Success()) {
-    return;
-  }
-  ThreadTrace *threadTraceInfo = nullptr;
-  FetchAndDecode(sbprocess, tid, sberror, &threadTraceInfo);
-  if (!sberror.Success()) {
-    return;
-  }
-  if (threadTraceInfo == nullptr) {
-    sberror.SetErrorStringWithFormat("internal error");
-    return;
-  }
-  position = threadTraceInfo->GetIteratorPosition();
-}
-
-void Decoder::SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
-                                  size_t insn_index, lldb::SBError &sberror) {
-  sberror.Clear();
-  CheckDebuggerID(sbprocess, sberror);
-  if (!sberror.Success()) {
-    return;
-  }
-  ThreadTrace *threadTraceInfo = nullptr;
-  FetchAndDecode(sbprocess, tid, sberror, &threadTraceInfo);
-  if (!sberror.Success()) {
-    return;
-  }
-  if (threadTraceInfo == nullptr) {
-    sberror.SetErrorStringWithFormat("internal error");
-    return;
-  }
-  threadTraceInfo->SetIteratorPosition(insn_index, sberror);
-}
-
-void Decoder::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,
-                                        lldb::tid_t tid, uint32_t offset,
-                                        uint32_t count,
-                                        InstructionList &result_list,
-                                        lldb::SBError &sberror) {
-  sberror.Clear();
-  CheckDebuggerID(sbprocess, sberror);
-  if (!sberror.Success()) {
-    return;
-  }
+  if (!sberror.Success())
+    return thread_trace;
 
   std::lock_guard<std::mutex> guard(
       m_mapProcessUID_mapThreadID_TraceInfo_mutex);
   RemoveDeadProcessesAndThreads(sbprocess);
+  FetchAndDecode(sbprocess, tid, sberror, &thread_trace);
 
-  ThreadTrace *threadTraceInfo = nullptr;
-  FetchAndDecode(sbprocess, tid, sberror, &threadTraceInfo);
-  if (!sberror.Success()) {
-    return;
-  }
-  if (threadTraceInfo == nullptr) {
+  if (sberror.Success() && thread_trace == nullptr)
     sberror.SetErrorStringWithFormat("internal error");
-    return;
-  }
 
-  // Return instruction log by populating 'result_list'
-  const Instructions &insn_list = threadTraceInfo->GetInstructionLog();
-  uint64_t sum = (uint64_t)offset + 1;
-  if (((insn_list.size() <= offset) && (count <= sum) &&
-       ((sum - count) >= insn_list.size())) ||
-      (count < 1)) {
-    sberror.SetErrorStringWithFormat(
-        "Instruction Log not available for offset=%" PRIu32
-        " and count=%" PRIu32 ", ProcessID = %" PRIu64,
-        offset, count, sbprocess.GetProcessID());
-    return;
-  }
+  return thread_trace;
+}
 
-  Instructions::const_iterator itr_first =
-      (insn_list.size() <= offset) ? insn_list.begin()
-                                   : insn_list.begin() + insn_list.size() - sum;
-  Instructions::const_iterator itr_last =
-      (count <= sum) ? insn_list.begin() + insn_list.size() - (sum - count)
-                     : insn_list.end();
-  Instructions::const_iterator itr = itr_first;
-  while (itr != itr_last) {
-    result_list.AppendInstruction(*itr);
-    ++itr;
-  }
+std::vector<std::shared_ptr<FunctionSegment>> *
+Decoder::GetFunctionCallTree(lldb::SBProcess &sbprocess, lldb::tid_t tid,
+                             lldb::SBError &sberror) {
+  ThreadTrace *thread_trace = GetThreadTrace(sbprocess, tid, sberror);
+  if (!sberror.Success())
+    return nullptr;
+
+  return &thread_trace->GetFunctionCallTree();
 }
 
 void Decoder::GetProcessorTraceInfo(lldb::SBProcess &sbprocess, lldb::tid_t tid,

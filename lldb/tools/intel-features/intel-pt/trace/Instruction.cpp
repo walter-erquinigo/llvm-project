@@ -42,24 +42,3 @@ bool Instruction::IsError() const {
 bool Instruction::GetSpeculative() const { return speculative; }
 
 size_t Instruction::GetSize() const { return data.size(); }
-
-InstructionList::InstructionList() : m_insn_vec() {}
-
-InstructionList::InstructionList(const InstructionList &insn_list)
-    : m_insn_vec(insn_list.m_insn_vec) {}
-
-InstructionList::~InstructionList() {}
-
-// Get number of instructions in the list
-size_t InstructionList::GetSize() const { return m_insn_vec.size(); }
-
-// Get instruction at index
-Instruction InstructionList::GetInstructionAtIndex(uint32_t idx) {
-  return (idx < m_insn_vec.size() ? m_insn_vec[idx]
-                                  : Instruction());
-}
-
-// Append intruction at the end of the list
-void InstructionList::AppendInstruction(Instruction inst) {
-  m_insn_vec.push_back(inst);
-}

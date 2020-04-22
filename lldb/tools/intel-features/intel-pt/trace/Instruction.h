@@ -47,30 +47,6 @@ private:
   uint32_t speculative : 1; // Instruction was executed speculatively or not
 };
 
-/// \class InstructionList
-/// Represents a list of assembly instructions. Each instruction is of
-///     type Instruction.
-class InstructionList {
-public:
-  InstructionList();
-
-  InstructionList(const InstructionList &insn_list);
-
-  ~InstructionList();
-
-  // Get number of instructions in the list
-  size_t GetSize() const;
-
-  // Get instruction at index
-  Instruction GetInstructionAtIndex(uint32_t idx);
-
-  // Append intruction at the end of the list
-  void AppendInstruction(Instruction inst);
-
-private:
-  std::vector<Instruction> m_insn_vec;
-};
-
-typedef std::vector<Instruction> Instructions;
+typedef std::vector<Instruction> InstructionList;
 
 } // namespace intelpt_private

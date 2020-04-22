@@ -63,39 +63,62 @@ PTFunctionSegment::PTFunctionSegment(std::shared_ptr<FunctionSegment> segment)
 PTFunctionSegment::PTFunctionSegment() {}
 
 // CALL TREE
+
 PTFunctionSegment
 PTFunctionCallTree::GetFunctionSegmentAtIndex(size_t index) const {
-  return m_opaque_sp ? PTFunctionSegment(m_opaque_sp->at(index))
-                     : PTFunctionSegment();
+  return m_opaque_ptr ? PTFunctionSegment(m_opaque_ptr->at(index))
+                      : PTFunctionSegment();
 }
 
 size_t PTFunctionCallTree::GetSize() const {
-  return m_opaque_sp ? m_opaque_sp->size() : 0;
+  return m_opaque_ptr ? m_opaque_ptr->size() : 0;
 }
 
-void PTFunctionCallTree::SetSP(
-    std::shared_ptr<
-        std::vector<std::shared_ptr<intelpt_private::FunctionSegment>>>
-        call_tree) {
-  m_opaque_sp = call_tree;
+void PTFunctionCallTree::SetPtr(
+    std::vector<std::shared_ptr<intelpt_private::FunctionSegment>> *call_tree) {
+  m_opaque_ptr = call_tree;
+}
+
+// PT THREAD TRACE
+PTFunctionCallTree::PTFunctionCallTree() : m_opaque_ptr(nullptr) {}
+
+PTFunctionCallTree PTThreadTrace::GetFunctionCallTree() {
+  PTFunctionCallTree call_tree;
+  if (m_opaque_ptr) {
+    call_tree.SetPtr(&m_opaque_ptr->GetFunctionCallTree());
+  }
+  return call_tree;
+}
+
+void PTThreadTrace::SetPtr(intelpt_private::ThreadTrace *ptr) {
+  m_opaque_ptr = ptr;
+}
+
+size_t PTThreadTrace::GetPosition() {
+  return m_opaque_ptr ? m_opaque_ptr->GetPosition() : 0;
+}
+
+void PTThreadTrace::SetPosition(size_t position, lldb::SBError &sberror) {
+  if (m_opaque_ptr != nullptr)
+    m_opaque_ptr->SetPosition(position, sberror);
 }
 
 // PTInstructionList class member functions definitions
 size_t PTInstructionList::GetSize() const {
-  return (m_opaque_sp ? m_opaque_sp->GetSize() : 0);
+  return (m_opaque_sp ? m_opaque_sp->size() : 0);
 }
 
 PTInstruction PTInstructionList::GetInstructionAtIndex(uint32_t idx) {
   if (m_opaque_sp)
     return PTInstruction(std::shared_ptr<intelpt_private::Instruction>(
-        new Instruction(m_opaque_sp->GetInstructionAtIndex(idx))));
+        new Instruction(m_opaque_sp->at(idx))));
 
   return PTInstruction(std::shared_ptr<intelpt_private::Instruction>(
       new Instruction()));
 }
 
 void PTInstructionList::SetSP(
-    const std::shared_ptr<intelpt_private::InstructionList> &ptr) {
+    const std::shared_ptr<std::vector<intelpt_private::Instruction>> &ptr) {
   m_opaque_sp = ptr;
 }
 void PTInstructionList::Clear() {
@@ -165,50 +188,32 @@ void PTManager::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,
     return;
   }
 
+  ThreadTrace *thread_trace =
+      m_opaque_sp->GetThreadTrace(sbprocess, tid, sberror);
+  if (!sberror.Success())
+    return;
+
   std::shared_ptr<intelpt_private::InstructionList> insn_list_ptr(
       new InstructionList());
-  m_opaque_sp->GetInstructionLogAtOffset(sbprocess, tid, offset, count,
-                                         *insn_list_ptr, sberror);
+  thread_trace->GetInstructionLogAtOffset(offset, count, *insn_list_ptr,
+                                          sberror);
   if (!sberror.Success())
     return;
 
   result_list.SetSP(insn_list_ptr);
 }
 
-void PTManager::GetFunctionCallTree(lldb::SBProcess &sbprocess, lldb::tid_t tid,
-                                    PTFunctionCallTree &call_tree,
-                                    lldb::SBError &sberror) {
+PTThreadTrace PTManager::GetThreadTrace(lldb::SBProcess &sbprocess,
+                                        lldb::tid_t tid,
+                                        lldb::SBError &sberror) {
+  PTThreadTrace thread_trace;
   if (m_opaque_sp == nullptr) {
     sberror.SetErrorString("invalid PTManager instance");
-    return;
+    return thread_trace;
   }
 
-  std::shared_ptr<
-      std::vector<std::shared_ptr<intelpt_private::FunctionSegment>>>
-      call_tree_ptr(
-          new std::vector<std::shared_ptr<intelpt_private::FunctionSegment>>());
-  m_opaque_sp->GetFunctionCallTree(sbprocess, tid, *call_tree_ptr, sberror);
-  if (!sberror.Success())
-    return;
-  call_tree.SetSP(call_tree_ptr);
-}
-
-void PTManager::GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
-                                    size_t &position, lldb::SBError &sberror) {
-  if (m_opaque_sp == nullptr) {
-    sberror.SetErrorString("invalid PTManager instance");
-    return;
-  }
-  m_opaque_sp->GetIteratorPosition(sbprocess, tid, position, sberror);
-}
-
-void PTManager::SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
-                                    size_t insn_index, lldb::SBError &sberror) {
-  if (m_opaque_sp == nullptr) {
-    sberror.SetErrorString("invalid PTManager instance");
-    return;
-  }
-  m_opaque_sp->SetIteratorPosition(sbprocess, tid, insn_index, sberror);
+  thread_trace.SetPtr(m_opaque_sp->GetThreadTrace(sbprocess, tid, sberror));
+  return thread_trace;
 }
 
 void PTManager::GetProcessorTraceInfo(lldb::SBProcess &sbprocess,

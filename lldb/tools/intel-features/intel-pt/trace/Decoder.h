@@ -90,20 +90,12 @@ public:
   void StopProcessorTrace(lldb::SBProcess &sbprocess, lldb::SBError &sberror,
                           lldb::tid_t tid = LLDB_INVALID_THREAD_ID);
 
-  void GetFunctionCallTree(
-      lldb::SBProcess &sbprocess, lldb::tid_t tid,
-      std::vector<std::shared_ptr<FunctionSegment>> &result_list,
-      lldb::SBError &sberror);
-  void GetInstructionLogAtOffset(lldb::SBProcess &sbprocess, lldb::tid_t tid,
-                                 uint32_t offset, uint32_t count,
-                                 InstructionList &result_list,
-                                 lldb::SBError &sberror);
+  ThreadTrace *GetThreadTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
+                              lldb::SBError &sberror);
 
-  void GetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
-                           size_t &insn_index, lldb::SBError &sberror);
-
-  void SetIteratorPosition(lldb::SBProcess &sbprocess, lldb::tid_t tid,
-                           size_t insn_index, lldb::SBError &sberror);
+  std::vector<std::shared_ptr<FunctionSegment>> *
+  GetFunctionCallTree(lldb::SBProcess &sbprocess, lldb::tid_t tid,
+                      lldb::SBError &sberror);
 
   void GetProcessorTraceInfo(lldb::SBProcess &sbprocess, lldb::tid_t tid,
                              TraceOptions &traceinfo, lldb::SBError &sberror);
@@ -160,9 +152,9 @@ private:
       const ReadExecuteSectionInfos &readExecuteSectionInfos,
       lldb::SBError &sberror) const;
   void DecodeTrace(struct pt_insn_decoder *decoder,
-                   Instructions &instruction_list);
+                   InstructionList &instruction_list);
   int HandlePTInstructionEvents(pt_insn_decoder *decoder, int errcode,
-                                Instructions &instruction_list);
+                                InstructionList &instruction_list);
 
   typedef std::map<lldb::user_id_t, ThreadTrace> MapThreadID_TraceInfo;
   typedef std::map<uint32_t, MapThreadID_TraceInfo>

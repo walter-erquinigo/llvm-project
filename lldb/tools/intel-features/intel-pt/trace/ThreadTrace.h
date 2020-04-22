@@ -46,11 +46,15 @@ public:
 
   CPUInfo &GetCPUInfo();
 
-  const Instructions &GetInstructionLog();
+  const InstructionList &GetInstructionLog();
 
-  void SetInstructionLog(Instructions &instruction_log);
+  void SetInstructionLog(InstructionList &instruction_log);
 
   std::vector<std::shared_ptr<FunctionSegment>> &GetFunctionCallTree();
+
+  void GetInstructionLogAtOffset(uint32_t offset, uint32_t count,
+                                 InstructionList &result_list,
+                                 lldb::SBError &sberror);
 
   uint32_t GetStopID() const;
 
@@ -60,9 +64,9 @@ public:
 
   void SetUniqueTraceInstance(lldb::SBTrace &trace);
 
-  size_t GetIteratorPosition();
+  size_t GetPosition();
 
-  void SetIteratorPosition(size_t position, lldb::SBError &sberror);
+  void SetPosition(size_t position, lldb::SBError &sberror);
 
   friend class Decoder;
 
@@ -73,7 +77,7 @@ private:
   uint32_t m_thread_stop_id;     // stop id for thread
   lldb::SBTrace m_trace;         // unique tracing instance of a thread/process
   CPUInfo m_pt_cpu; // cpu info of the target on which inferior is running
-  Instructions m_instruction_log; // complete instruction log
+  InstructionList m_instruction_log; // complete instruction log
   std::vector<std::shared_ptr<FunctionSegment>>
       m_function_call_tree; // complete function call tree
   size_t m_insn_position;   // position of the instruction iterator

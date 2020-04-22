@@ -1,6 +1,7 @@
 #include "ThreadTrace.h"
 
 #include <cassert>
+#include <cinttypes>
 
 using namespace intelpt_private;
 
@@ -24,11 +25,11 @@ ReadExecuteSectionInfos &ThreadTrace::GetReadExecuteSectionInfos() {
 
 CPUInfo &ThreadTrace::GetCPUInfo() { return m_pt_cpu; }
 
-const Instructions &ThreadTrace::GetInstructionLog() {
+const InstructionList &ThreadTrace::GetInstructionLog() {
   return m_instruction_log;
 }
 
-void ThreadTrace::SetInstructionLog(Instructions &instruction_log) {
+void ThreadTrace::SetInstructionLog(InstructionList &instruction_log) {
   m_instruction_log = std::move(instruction_log);
   assert(!m_instruction_log.empty());
   m_insn_position = m_instruction_log.size() - 1;
@@ -49,12 +50,41 @@ void ThreadTrace::SetUniqueTraceInstance(lldb::SBTrace &trace) {
   m_trace = trace;
 }
 
-size_t ThreadTrace::GetIteratorPosition() { return m_insn_position; }
+size_t ThreadTrace::GetPosition() { return m_insn_position; }
 
-void ThreadTrace::SetIteratorPosition(size_t position, lldb::SBError &sberror) {
+void ThreadTrace::SetPosition(size_t position, lldb::SBError &sberror) {
   if (position > m_instruction_log.size()) {
     sberror.SetErrorString("Position is beyond the trace size");
     return;
   }
   m_insn_position = position;
+}
+
+void ThreadTrace::GetInstructionLogAtOffset(uint32_t offset, uint32_t count,
+                                            InstructionList &result_list,
+                                            lldb::SBError &sberror) {
+  // Return instruction log by populating 'result_list'
+  const InstructionList &insn_list = GetInstructionLog();
+  uint64_t sum = (uint64_t)offset + 1;
+  if (((insn_list.size() <= offset) && (count <= sum) &&
+       ((sum - count) >= insn_list.size())) ||
+      (count < 1)) {
+    sberror.SetErrorStringWithFormat(
+        "Instruction Log not available for offset=%" PRIu32
+        " and count=%" PRIu32,
+        offset, count);
+    return;
+  }
+
+  InstructionList::const_iterator itr_first =
+      (insn_list.size() <= offset) ? insn_list.begin()
+                                   : insn_list.begin() + insn_list.size() - sum;
+  InstructionList::const_iterator itr_last =
+      (count <= sum) ? insn_list.begin() + insn_list.size() - (sum - count)
+                     : insn_list.end();
+  InstructionList::const_iterator itr = itr_first;
+  while (itr != itr_last) {
+    result_list.push_back(*itr);
+    ++itr;
+  }
 }
