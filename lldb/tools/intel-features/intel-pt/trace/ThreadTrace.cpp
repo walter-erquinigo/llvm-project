@@ -50,7 +50,7 @@ void ThreadTrace::SetUniqueTraceInstance(lldb::SBTrace &trace) {
   m_trace = trace;
 }
 
-size_t ThreadTrace::GetPosition() { return m_insn_position; }
+size_t ThreadTrace::GetPosition() const { return m_insn_position; }
 
 void ThreadTrace::SetPosition(size_t position, lldb::SBError &sberror) {
   if (position > m_instruction_log.size()) {
@@ -87,4 +87,15 @@ void ThreadTrace::GetInstructionLogAtOffset(uint32_t offset, uint32_t count,
     result_list.push_back(*itr);
     ++itr;
   }
+}
+
+Instruction &ThreadTrace::GetCurrentInstruction() {
+  return m_instruction_log[GetPosition()];
+}
+
+std::vector<FunctionSegment *> ThreadTrace::GetFrames() {
+  std::vector<FunctionSegment *> frames;
+  for (FunctionSegment *segment = GetCurrentInstruction().GetFunctionSegment(); segment != nullptr; segment = segment->GetParent())
+    frames.push_back(segment);
+  return frames;
 }

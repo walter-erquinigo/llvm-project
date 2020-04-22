@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "cli-wrapper-pt.h"
+#include "commands/ProcessorTraceBacktrace.h"
 #include "commands/ProcessorTraceGoTo.h"
 #include "commands/ProcessorTraceShowFunctionCallHistory.h"
 #include "commands/ProcessorTraceShowInstrLog.h"
@@ -36,6 +37,7 @@ bool PTPluginInitialize(lldb::SBDebugger &debugger) {
       new ProcessorTraceShowInstrLog(PTManagerSP),
       new ProcessorTraceShowTraceOptions(PTManagerSP),
       new ProcessorTraceShowFunctionCallHistory(PTManagerSP),
+      new ProcessorTraceBacktrace(PTManagerSP),
       new ProcessorTraceGoTo(PTManagerSP),
   };
 

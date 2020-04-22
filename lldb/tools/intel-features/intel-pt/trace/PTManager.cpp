@@ -14,51 +14,61 @@ using namespace intelpt_private;
 
 // PTInstruction class member functions definitions
 PTInstruction::PTInstruction(
-    const std::shared_ptr<intelpt_private::Instruction> &ptr)
-    : m_opaque_sp(ptr) {}
+    intelpt_private::Instruction *ptr)
+    : m_opaque_ptr(ptr) {}
 
 PTInstruction::~PTInstruction() {}
 
 uint64_t PTInstruction::GetInsnAddress() const {
-  return (m_opaque_sp ? m_opaque_sp->GetInsnAddress() : 0);
+  return (m_opaque_ptr ? m_opaque_ptr->GetInsnAddress() : 0);
 }
 
 size_t PTInstruction::GetRawBytes(void *buf, size_t size) const {
-  return (m_opaque_sp ? m_opaque_sp->GetRawBytes(buf, size) : 0);
+  return (m_opaque_ptr ? m_opaque_ptr->GetRawBytes(buf, size) : 0);
 }
 
 const char *PTInstruction::GetError() const {
-  return (m_opaque_sp ? m_opaque_sp->GetError() : "null pointer");
+  return (m_opaque_ptr ? m_opaque_ptr->GetError() : "null pointer");
 }
 
 bool PTInstruction::IsError() const  {
-  return m_opaque_sp ? m_opaque_sp->IsError() : true;
+  return m_opaque_ptr? m_opaque_ptr->IsError() : true;
 }
 
 bool PTInstruction::GetSpeculative() const {
-  return (m_opaque_sp ? m_opaque_sp->GetSpeculative() : 0);
+  return (m_opaque_ptr? m_opaque_ptr->GetSpeculative() : 0);
 }
 
 // SEGMENT
 const char *PTFunctionSegment::GetFunctionName() const {
-  return (m_opaque_sp ? m_opaque_sp->GetFunctionName() : nullptr);
+  return (m_opaque_ptr ? m_opaque_ptr->GetFunctionName() : nullptr);
 }
 
 const char *PTFunctionSegment::GetDisplayName() const {
-  return (m_opaque_sp ? m_opaque_sp->GetDisplayName() : nullptr);
+  return (m_opaque_ptr ? m_opaque_ptr->GetDisplayName() : nullptr);
 }
 
 lldb::addr_t PTFunctionSegment::GetStartLoadAddress() const {
-  return (m_opaque_sp ? m_opaque_sp->GetStartLoadAddress()
+  return (m_opaque_ptr ? m_opaque_ptr->GetStartLoadAddress()
+                      : LLDB_INVALID_ADDRESS);
+}
+
+lldb::addr_t PTFunctionSegment::GetEndLoadAddress() const {
+  return (m_opaque_ptr ? m_opaque_ptr->GetEndLoadAddress()
+                      : LLDB_INVALID_ADDRESS);
+}
+
+size_t PTFunctionSegment::GetID() const {
+  return (m_opaque_ptr ? m_opaque_ptr->GetID()
                       : LLDB_INVALID_ADDRESS);
 }
 
 int PTFunctionSegment::GetLevel() const {
-  return (m_opaque_sp ? m_opaque_sp->GetLevel() : 0);
+  return (m_opaque_ptr ? m_opaque_ptr->GetLevel() : 0);
 }
 
-PTFunctionSegment::PTFunctionSegment(std::shared_ptr<FunctionSegment> segment)
-    : m_opaque_sp(segment) {}
+PTFunctionSegment::PTFunctionSegment(FunctionSegment *segment)
+    : m_opaque_ptr(segment) {}
 
 PTFunctionSegment::PTFunctionSegment() {}
 
@@ -66,7 +76,7 @@ PTFunctionSegment::PTFunctionSegment() {}
 
 PTFunctionSegment
 PTFunctionCallTree::GetFunctionSegmentAtIndex(size_t index) const {
-  return m_opaque_ptr ? PTFunctionSegment(m_opaque_ptr->at(index))
+  return m_opaque_ptr ? PTFunctionSegment(m_opaque_ptr->at(index).get())
                       : PTFunctionSegment();
 }
 
@@ -103,28 +113,30 @@ void PTThreadTrace::SetPosition(size_t position, lldb::SBError &sberror) {
     m_opaque_ptr->SetPosition(position, sberror);
 }
 
+size_t PTThreadTrace::GetNumFrames() {
+  return m_opaque_ptr ? m_opaque_ptr->GetFrames().size() : 0;
+}
+
+PTFunctionSegment PTThreadTrace::GetFrameAtIndex(size_t index) {
+  return m_opaque_ptr ? PTFunctionSegment(m_opaque_ptr->GetFrames()[index]) : PTFunctionSegment();
+}
+
+PTInstruction PTThreadTrace::GetCurrentInstruction() {
+  return m_opaque_ptr ? PTInstruction(&m_opaque_ptr->GetCurrentInstruction()) : PTInstruction();
+}
+
 // PTInstructionList class member functions definitions
 size_t PTInstructionList::GetSize() const {
-  return (m_opaque_sp ? m_opaque_sp->size() : 0);
+  return (m_opaque_ptr ? m_opaque_ptr->size() : 0);
 }
 
 PTInstruction PTInstructionList::GetInstructionAtIndex(uint32_t idx) {
-  if (m_opaque_sp)
-    return PTInstruction(std::shared_ptr<intelpt_private::Instruction>(
-        new Instruction(m_opaque_sp->at(idx))));
-
-  return PTInstruction(std::shared_ptr<intelpt_private::Instruction>(
-      new Instruction()));
+  return m_opaque_ptr ? PTInstruction(&m_opaque_ptr->at(idx)) : PTInstruction();
 }
 
-void PTInstructionList::SetSP(
-    const std::shared_ptr<std::vector<intelpt_private::Instruction>> &ptr) {
-  m_opaque_sp = ptr;
-}
-void PTInstructionList::Clear() {
-  if (!m_opaque_sp)
-    return;
-  m_opaque_sp.reset();
+void PTInstructionList::SetPtr(
+    std::vector<intelpt_private::Instruction> *ptr) {
+  m_opaque_ptr = ptr;
 }
 
 // PTTraceOptions class member functions definitions
@@ -193,14 +205,13 @@ void PTManager::GetInstructionLogAtOffset(lldb::SBProcess &sbprocess,
   if (!sberror.Success())
     return;
 
-  std::shared_ptr<intelpt_private::InstructionList> insn_list_ptr(
-      new InstructionList());
+  intelpt_private::InstructionList *insn_list_ptr = new InstructionList();
   thread_trace->GetInstructionLogAtOffset(offset, count, *insn_list_ptr,
                                           sberror);
   if (!sberror.Success())
     return;
 
-  result_list.SetSP(insn_list_ptr);
+  result_list.SetPtr(insn_list_ptr);
 }
 
 PTThreadTrace PTManager::GetThreadTrace(lldb::SBProcess &sbprocess,

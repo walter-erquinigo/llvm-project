@@ -7,6 +7,8 @@
 #include "lldb/lldb-types.h"
 
 namespace intelpt_private {
+class FunctionSegment;
+
 /// \class Instruction
 /// Represents an assembly instruction containing raw
 ///     instruction bytes, instruction address along with information
@@ -38,7 +40,12 @@ public:
 
   bool IsError() const;
 
+  FunctionSegment *GetFunctionSegment() const;
+
+  void SetFunctionSegment(FunctionSegment *segment);
+
 private:
+  FunctionSegment *m_function_segment;
   lldb::addr_t ip;           // instruction address in inferior's memory image
   std::vector<uint8_t> data; // raw bytes
   int m_error_code;         // libipt error code if instruction is invalid

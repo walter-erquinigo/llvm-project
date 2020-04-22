@@ -64,9 +64,13 @@ public:
 
   void SetUniqueTraceInstance(lldb::SBTrace &trace);
 
-  size_t GetPosition();
+  size_t GetPosition() const;
 
   void SetPosition(size_t position, lldb::SBError &sberror);
+
+  std::vector<FunctionSegment *> GetFrames();
+
+  Instruction &GetCurrentInstruction();
 
   friend class Decoder;
 

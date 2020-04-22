@@ -5,10 +5,10 @@
 using namespace intelpt_private;
 
 Instruction::Instruction()
-    : ip(0), data(), m_error_code(pte_invalid), iclass(ptic_error), speculative(0) {}
+    : m_function_segment(nullptr), ip(0), data(), m_error_code(pte_invalid), iclass(ptic_error), speculative(0) {}
 
 Instruction::Instruction(const struct pt_insn &insn)
-    : ip(insn.ip), data(), m_error_code(0),
+    : m_function_segment(nullptr), ip(insn.ip), data(), m_error_code(0),
       iclass(insn.iclass), speculative(insn.speculative) {
   if (insn.size != 0)
     data.assign(insn.raw, insn.raw + insn.size);
@@ -42,3 +42,11 @@ bool Instruction::IsError() const {
 bool Instruction::GetSpeculative() const { return speculative; }
 
 size_t Instruction::GetSize() const { return data.size(); }
+
+FunctionSegment *Instruction::GetFunctionSegment() const {
+  return m_function_segment;
+}
+
+void Instruction::SetFunctionSegment(FunctionSegment *segment) {
+  m_function_segment = segment;
+}

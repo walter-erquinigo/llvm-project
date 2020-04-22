@@ -48,12 +48,17 @@ lldb::addr_t FunctionSegment::GetStartLoadAddress() const {
   return m_insn_first->GetInsnAddress();
 }
 
+lldb::addr_t FunctionSegment::GetEndLoadAddress() const {
+  return m_insn_last->GetInsnAddress();
+}
+
 FunctionSegment *FunctionSegment::GetParent() const { return m_parent; }
 
 void FunctionSegment::SetParent(FunctionSegment *parent) { m_parent = parent; }
 
 void FunctionSegment::AppendInstruction(Instruction *insn) {
   m_insn_last = insn;
+  insn->SetFunctionSegment(this);
 }
 
 FunctionSegment *FunctionSegment::GetNext() const { return m_next; }

@@ -39,7 +39,7 @@ class PTInstruction {
 public:
   PTInstruction() = default;
 
-  PTInstruction(const std::shared_ptr<intelpt_private::Instruction> &ptr);
+  PTInstruction(intelpt_private::Instruction *ptr);
 
   ~PTInstruction();
 
@@ -75,7 +75,7 @@ public:
   bool IsError() const;
 
 private:
-  std::shared_ptr<intelpt_private::Instruction> m_opaque_sp;
+  intelpt_private::Instruction *m_opaque_ptr;
 };
 
 /// \class PTInstructionList
@@ -88,35 +88,34 @@ public:
 
   // Get instruction at index
   PTInstruction GetInstructionAtIndex(uint32_t idx);
-
-  void Clear();
-
 private:
   friend class PTManager;
 
   void
-  SetSP(const std::shared_ptr<std::vector<intelpt_private::Instruction>> &ptr);
+  SetPtr(std::vector<intelpt_private::Instruction> *ptr);
 
-  std::shared_ptr<std::vector<intelpt_private::Instruction>> m_opaque_sp;
+  std::vector<intelpt_private::Instruction> *m_opaque_ptr;
 };
 
 class PTFunctionSegment {
 public:
+  PTFunctionSegment(intelpt_private::FunctionSegment *segment);
+
   const char *GetFunctionName() const;
 
   const char *GetDisplayName() const;
 
   lldb::addr_t GetStartLoadAddress() const;
 
+  lldb::addr_t GetEndLoadAddress() const;
+
+  size_t GetID() const;
+
   int GetLevel() const;
   PTFunctionSegment();
 
 private:
-  friend class PTFunctionCallTree;
-
-  PTFunctionSegment(std::shared_ptr<intelpt_private::FunctionSegment> segment);
-
-  std::shared_ptr<intelpt_private::FunctionSegment> m_opaque_sp;
+  intelpt_private::FunctionSegment *m_opaque_ptr;
 };
 
 class PTFunctionCallTree {
@@ -142,7 +141,13 @@ public:
 
   size_t GetPosition();
 
-  void SetPosition(size_t insn_index, lldb::SBError &sberror);
+  void SetPosition(size_t position, lldb::SBError &sberror);
+
+  size_t GetNumFrames();
+
+  PTFunctionSegment GetFrameAtIndex(size_t index);
+
+  PTInstruction GetCurrentInstruction();
 
 private:
   friend class PTManager;

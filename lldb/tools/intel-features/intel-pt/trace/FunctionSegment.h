@@ -31,6 +31,8 @@ public:
 
   lldb::addr_t GetStartLoadAddress() const;
 
+  lldb::addr_t GetEndLoadAddress() const;
+
   const char *GetDisplayName();
 
   FunctionSegment *GetParent() const;
