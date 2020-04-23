@@ -113,9 +113,16 @@ void ThreadTrace::GetFrames(std::vector<FrameSP> &frames) {
   } while (segment);
 }
 
-bool ThreadTrace::ReverseNextInstruction() {
+bool ThreadTrace::ReverseStepInst() {
   if (m_insn_position == 0)
     return false;
   m_insn_position--;
+  return true;
+}
+
+bool ThreadTrace::StepInst() {
+  if (m_insn_position == m_instruction_log.size())
+    return false;
+  m_insn_position++;
   return true;
 }

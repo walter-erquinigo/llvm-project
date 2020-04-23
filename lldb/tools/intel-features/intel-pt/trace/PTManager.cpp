@@ -179,8 +179,12 @@ PTInstruction PTThreadTrace::GetCurrentInstruction() {
                       : PTInstruction();
 }
 
-bool PTThreadTrace::ReverseNextInstruction() {
-  return m_opaque_ptr ? m_opaque_ptr->ReverseNextInstruction() : false;
+bool PTThreadTrace::ReverseStepInst() {
+  return m_opaque_ptr ? m_opaque_ptr->ReverseStepInst() : false;
+}
+
+bool PTThreadTrace::StepInst() {
+  return m_opaque_ptr ? m_opaque_ptr->StepInst() : false;
 }
 
 // PTInstructionList class member functions definitions

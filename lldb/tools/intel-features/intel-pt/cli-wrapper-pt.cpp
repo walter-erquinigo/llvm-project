@@ -17,7 +17,8 @@
 #include <sstream>
 
 #include "cli-wrapper-pt.h"
-#include "commands/ProcessorTraceReverseNextInstruction.h"
+#include "commands/ProcessorTraceReverseStepInst.h"
+#include "commands/ProcessorTraceStepInst.h"
 #include "commands/ProcessorTraceBacktrace.h"
 #include "commands/ProcessorTraceGoTo.h"
 #include "commands/ProcessorTraceShowFunctionCallHistory.h"
@@ -44,7 +45,8 @@ bool PTPluginInitialize(lldb::SBDebugger &debugger) {
       new ProcessorTraceShowFunctionCallHistory(PTManagerSP),
       new ProcessorTraceBacktrace(PTManagerSP),
       new ProcessorTraceGoTo(PTManagerSP),
-      new ProcessorTraceReverseNextInstruction(PTManagerSP),
+      new ProcessorTraceReverseStepInst(PTManagerSP),
+      new ProcessorTraceStepInst(PTManagerSP),
   };
 
   for (ProcessorTraceCommand *command : commands) {

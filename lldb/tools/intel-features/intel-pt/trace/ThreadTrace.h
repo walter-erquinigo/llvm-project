@@ -72,7 +72,9 @@ public:
 
   InstructionSP GetCurrentInstruction();
 
-  bool ReverseNextInstruction();
+  bool ReverseStepInst();
+
+  bool StepInst();
 
   friend class Decoder;
 
