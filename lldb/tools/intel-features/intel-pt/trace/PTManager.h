@@ -170,6 +170,8 @@ public:
 
   PTInstruction GetCurrentInstruction();
 
+  bool ReverseNextInstruction();
+
   void SetPtr(intelpt_private::ThreadTrace *ptr);
 
 private:

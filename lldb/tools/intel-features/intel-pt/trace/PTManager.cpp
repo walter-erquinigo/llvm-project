@@ -179,6 +179,10 @@ PTInstruction PTThreadTrace::GetCurrentInstruction() {
                       : PTInstruction();
 }
 
+bool PTThreadTrace::ReverseNextInstruction() {
+  return m_opaque_ptr ? m_opaque_ptr->ReverseNextInstruction() : false;
+}
+
 // PTInstructionList class member functions definitions
 size_t PTInstructionList::GetSize() const {
   return (m_opaque_sp ? m_opaque_sp->size() : 0);

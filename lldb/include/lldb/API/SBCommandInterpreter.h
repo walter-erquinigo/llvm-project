@@ -109,6 +109,8 @@ public:
 
   lldb::SBDebugger GetDebugger();
 
+  bool AddAlias(const char *full_command, const char *alias_name);
+
   lldb::SBCommand AddMultiwordCommand(const char *name, const char *help);
 
   /// Add a new command to the lldb::CommandInterpreter.

@@ -678,6 +678,19 @@ bool SBCommandInterpreter::SetCommandOverrideCallback(
   return false;
 }
 
+bool SBCommandInterpreter::AddAlias(const char *full_command,
+                                    const char *alias_name) {
+  if (IsValid() && full_command && alias_name) {
+    auto cmd_obj_sp = m_opaque_ptr->GetCommandSPExact(full_command, false);
+    if (cmd_obj_sp) {
+      m_opaque_ptr->AddAlias(alias_name, cmd_obj_sp)
+          ->SetSyntax(cmd_obj_sp->GetSyntax());
+      return true;
+    }
+  }
+  return false;
+}
+
 lldb::SBCommand SBCommandInterpreter::AddMultiwordCommand(const char *name,
                                                           const char *help) {
   LLDB_RECORD_METHOD(lldb::SBCommand, SBCommandInterpreter, AddMultiwordCommand,

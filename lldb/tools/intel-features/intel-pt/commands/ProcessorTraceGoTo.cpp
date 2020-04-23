@@ -90,3 +90,5 @@ const char *ProcessorTraceGoTo::GetSyntax() {
          "\t\b<instruction-index>\n"
          "\t    index of instruction in the trace\n";
 }
+
+const char *ProcessorTraceGoTo::GetAlias() { return "ptgt"; }

@@ -1,6 +1,7 @@
 #include "Instruction.h"
 
 #include "intel-pt.h"
+#include "lldb/lldb-defines.h"
 
 using namespace intelpt_private;
 
@@ -12,7 +13,7 @@ Instruction::Instruction(size_t id, const struct pt_insn &insn)
 }
 
 Instruction::Instruction(size_t id, int error_code)
-    : m_id(id), m_function_segment(), ip(0), data(), m_error_code(error_code),
+    : m_id(id), m_function_segment(), ip(LLDB_INVALID_ADDRESS), data(), m_error_code(error_code),
       iclass(ptic_error), speculative(0) {}
 
 Instruction::~Instruction() {}

@@ -14,7 +14,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <sstream>
+
 #include "cli-wrapper-pt.h"
+#include "commands/ProcessorTraceReverseNextInstruction.h"
 #include "commands/ProcessorTraceBacktrace.h"
 #include "commands/ProcessorTraceGoTo.h"
 #include "commands/ProcessorTraceShowFunctionCallHistory.h"
@@ -28,6 +31,8 @@ bool PTPluginInitialize(lldb::SBDebugger &debugger) {
   lldb::SBCommandInterpreter interpreter = debugger.GetCommandInterpreter();
   lldb::SBCommand proc_trace = interpreter.AddMultiwordCommand(
       "processor-trace", "Intel(R) Processor Trace for thread/process");
+  interpreter.AddAlias("processor-trace", "pt");
+
   std::shared_ptr<intelpt::PTManager> PTManagerSP(
       new intelpt::PTManager(debugger));
 
@@ -39,11 +44,19 @@ bool PTPluginInitialize(lldb::SBDebugger &debugger) {
       new ProcessorTraceShowFunctionCallHistory(PTManagerSP),
       new ProcessorTraceBacktrace(PTManagerSP),
       new ProcessorTraceGoTo(PTManagerSP),
+      new ProcessorTraceReverseNextInstruction(PTManagerSP),
   };
 
-  for (ProcessorTraceCommand *command : commands)
+  for (ProcessorTraceCommand *command : commands) {
     proc_trace.AddCommand(command->GetCommandName(), command,
                           command->GetHelp(), command->GetSyntax());
+    const char *alias = command->GetAlias();
+    if (alias) {
+      std::ostringstream oss;
+      oss << "processor-trace " << command->GetCommandName();
+      interpreter.AddAlias(oss.str().c_str(), alias);
+    }
+  }
 
   return true;
 }

@@ -114,3 +114,5 @@ const char *ProcessorTraceBacktrace::GetSyntax() {
          "\t    thread index of the thread. If no threads are specified, "
          "the currently selected thread is taken.\n";
 }
+
+const char *ProcessorTraceBacktrace::GetAlias() { return "ptbt"; }

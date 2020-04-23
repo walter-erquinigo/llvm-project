@@ -22,6 +22,8 @@ public:
 
   const char *GetSyntax() override;
 
+  const char *GetAlias() override;
+
 private:
   std::shared_ptr<intelpt::PTManager> pt_decoder_sp;
 };

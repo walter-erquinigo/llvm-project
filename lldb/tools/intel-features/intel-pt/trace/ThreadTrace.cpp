@@ -112,3 +112,10 @@ void ThreadTrace::GetFrames(std::vector<FrameSP> &frames) {
     segment = inner_segment->GetParent();
   } while (segment);
 }
+
+bool ThreadTrace::ReverseNextInstruction() {
+  if (m_insn_position == 0)
+    return false;
+  m_insn_position--;
+  return true;
+}
