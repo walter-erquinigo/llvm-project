@@ -7,6 +7,7 @@
 #include "intel-pt.h"
 
 #include "lldb/API/SBError.h"
+#include "lldb/API/SBThread.h"
 #include "lldb/API/SBTrace.h"
 
 namespace intelpt_private {
@@ -32,7 +33,7 @@ typedef std::vector<ReadExecuteSectionInfo> ReadExecuteSectionInfos;
 
 class ThreadTrace {
 public:
-  ThreadTrace();
+  ThreadTrace(const lldb::SBThread &thread);
 
   ThreadTrace(const ThreadTrace &trace_info) = delete;
 
@@ -76,9 +77,12 @@ public:
 
   bool StepInst();
 
+  bool ReverseStepOver();
+
   friend class Decoder;
 
 private:
+  lldb::SBThread m_thread; // thread associated with this trace
   Buffer m_pt_buffer; // raw trace buffer
   ReadExecuteSectionInfos
       m_readExecuteSectionInfos; // inferior's memory image info

@@ -6,10 +6,10 @@
 
 using namespace intelpt_private;
 
-ThreadTrace::ThreadTrace()
-    : m_pt_buffer(), m_readExecuteSectionInfos(), m_thread_stop_id(0),
-      m_trace(), m_pt_cpu(), m_instruction_log(), m_insn_position(0) {}
-
+ThreadTrace::ThreadTrace(const lldb::SBThread &thread)
+    : m_thread(thread), m_pt_buffer(), m_readExecuteSectionInfos(),
+      m_thread_stop_id(0), m_trace(), m_pt_cpu(), m_instruction_log(),
+      m_insn_position(0) {}
 
 ThreadTrace::~ThreadTrace() {}
 
@@ -125,4 +125,11 @@ bool ThreadTrace::StepInst() {
     return false;
   m_insn_position++;
   return true;
+}
+
+bool ThreadTrace::ReverseStepOver() {
+  size_t pos = m_insn_position;
+  for (size_t pos = m_insn_position; pos > 0; pos--) {
+  }
+  return false;
 }

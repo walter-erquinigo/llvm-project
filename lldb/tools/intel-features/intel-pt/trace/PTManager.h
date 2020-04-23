@@ -174,6 +174,8 @@ public:
 
   bool StepInst();
 
+  bool ReverseStepOver();
+
   void SetPtr(intelpt_private::ThreadTrace *ptr);
 
 private:

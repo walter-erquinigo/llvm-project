@@ -187,6 +187,10 @@ bool PTThreadTrace::StepInst() {
   return m_opaque_ptr ? m_opaque_ptr->StepInst() : false;
 }
 
+bool PTThreadTrace::ReverseStepOver() {
+  return m_opaque_ptr ? m_opaque_ptr->ReverseStepOver() : false;
+}
+
 // PTInstructionList class member functions definitions
 size_t PTInstructionList::GetSize() const {
   return (m_opaque_sp ? m_opaque_sp->size() : 0);

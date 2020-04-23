@@ -17,14 +17,15 @@
 #include <sstream>
 
 #include "cli-wrapper-pt.h"
-#include "commands/ProcessorTraceReverseStepInst.h"
-#include "commands/ProcessorTraceStepInst.h"
 #include "commands/ProcessorTraceBacktrace.h"
 #include "commands/ProcessorTraceGoTo.h"
+#include "commands/ProcessorTraceReverseStepInst.h"
+#include "commands/ProcessorTraceReverseStepOver.h"
 #include "commands/ProcessorTraceShowFunctionCallHistory.h"
 #include "commands/ProcessorTraceShowInstrLog.h"
 #include "commands/ProcessorTraceShowTraceOptions.h"
 #include "commands/ProcessorTraceStart.h"
+#include "commands/ProcessorTraceStepInst.h"
 #include "commands/ProcessorTraceStop.h"
 #include "lldb/API/SBCommandInterpreter.h"
 
@@ -47,6 +48,7 @@ bool PTPluginInitialize(lldb::SBDebugger &debugger) {
       new ProcessorTraceGoTo(PTManagerSP),
       new ProcessorTraceReverseStepInst(PTManagerSP),
       new ProcessorTraceStepInst(PTManagerSP),
+      new ProcessorTraceReverseStepOver(PTManagerSP),
   };
 
   for (ProcessorTraceCommand *command : commands) {
