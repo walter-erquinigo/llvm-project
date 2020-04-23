@@ -7,15 +7,15 @@
 namespace intelpt_private {
 
 static int global_id = 0;
-class FunctionSegment {
+class FunctionSegment : public std::enable_shared_from_this<FunctionSegment> {
 public:
-  FunctionSegment() = delete;
+  FunctionSegment(const FunctionSegment &segment) = delete;
 
-  FunctionSegment(Instruction *insn_error, int level);
+  FunctionSegment(size_t id, const InstructionSP &insn_error, int level);
 
-  FunctionSegment(const lldb::SBFunction &function,
-                  const lldb::SBSymbol &symbol, Instruction *insn, int level,
-                  FunctionSegment *parent);
+  FunctionSegment(size_t id, const lldb::SBFunction &function,
+                  const lldb::SBSymbol &symbol, const InstructionSP &insn,
+                  int level, const FunctionSegmentSP &parent);
 
   bool IsGap() const;
 
@@ -23,9 +23,9 @@ public:
 
   void SetLevel(int level);
 
-  const lldb::SBFunction &GetSBFunction() const;
+  const lldb::SBFunction GetSBFunction() const;
 
-  const lldb::SBSymbol &GetSymbol() const;
+  const lldb::SBSymbol GetSymbol() const;
 
   const char *GetFunctionName();
 
@@ -35,19 +35,21 @@ public:
 
   const char *GetDisplayName();
 
-  FunctionSegment *GetParent() const;
+  FunctionSegmentSP GetParent() const;
 
-  void SetParent(FunctionSegment *parent);
+  void SetParent(const FunctionSegmentSP &parent);
 
-  void AppendInstruction(Instruction *insn);
+  void AppendInstruction(const InstructionSP &insn);
 
-  FunctionSegment *GetNext() const;
+  FunctionSegmentSP GetNext() const;
 
-  Instruction *GetLastInstruction() const;
+  InstructionSP GetLastInstruction() const;
 
-  FunctionSegment *GetPrev() const;
+  InstructionSP GetFirstInstruction() const;
 
-  void SetNextSegment(FunctionSegment *next_segment);
+  FunctionSegmentSP GetPrev() const;
+
+  void SetNextSegment(const FunctionSegmentSP &next_segment);
 
   int GetID();
 
@@ -57,19 +59,19 @@ private:
   int m_id;
   lldb::SBFunction m_function;
   lldb::SBSymbol m_symbol;
-  Instruction *m_insn_first;
-  Instruction *m_insn_last;
+  InstructionSP m_insn_first;
+  InstructionSP m_insn_last;
   int m_level;
   bool m_is_gap;
   /* The function segment number of the directly preceding function segment in
      a (fake) call stack. */
-  FunctionSegment *m_parent;
+  FunctionSegmentSP m_parent;
   /* The function segment numbers of the previous and next segment belonging to
      the same function.  If a function calls another function, the former will
      have at least two segments: one before the call and another after the
      return.  */
-  FunctionSegment *m_prev;
-  FunctionSegment *m_next;
+  FunctionSegmentSP m_prev;
+  std::weak_ptr<FunctionSegment> m_next;
 };
 
 } // namespace intelpt_private

@@ -4,19 +4,16 @@
 
 using namespace intelpt_private;
 
-Instruction::Instruction()
-    : m_function_segment(nullptr), ip(0), data(), m_error_code(pte_invalid), iclass(ptic_error), speculative(0) {}
-
-Instruction::Instruction(const struct pt_insn &insn)
-    : m_function_segment(nullptr), ip(insn.ip), data(), m_error_code(0),
+Instruction::Instruction(size_t id, const struct pt_insn &insn)
+    : m_id(id), m_function_segment(), ip(insn.ip), data(), m_error_code(0),
       iclass(insn.iclass), speculative(insn.speculative) {
   if (insn.size != 0)
     data.assign(insn.raw, insn.raw + insn.size);
 }
 
-Instruction::Instruction(int error_code)
-    : ip(0), data(), m_error_code(error_code), iclass(ptic_error),
-      speculative(0) {}
+Instruction::Instruction(size_t id, int error_code)
+    : m_id(id), m_function_segment(), ip(0), data(), m_error_code(error_code),
+      iclass(ptic_error), speculative(0) {}
 
 Instruction::~Instruction() {}
 
@@ -43,10 +40,12 @@ bool Instruction::GetSpeculative() const { return speculative; }
 
 size_t Instruction::GetSize() const { return data.size(); }
 
-FunctionSegment *Instruction::GetFunctionSegment() const {
-  return m_function_segment;
+FunctionSegmentSP Instruction::GetFunctionSegment() const {
+  return m_function_segment.lock();
 }
 
-void Instruction::SetFunctionSegment(FunctionSegment *segment) {
+void Instruction::SetFunctionSegment(const FunctionSegmentSP &segment) {
   m_function_segment = segment;
 }
+
+size_t Instruction::GetID() const { return m_id; }

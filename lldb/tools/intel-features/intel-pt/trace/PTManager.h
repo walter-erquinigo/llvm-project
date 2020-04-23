@@ -12,6 +12,7 @@
 // C/C++ Includes
 #include <vector>
 
+#include "intelpt_private-forward.h"
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBProcess.h"
@@ -19,14 +20,6 @@
 #include "lldb/API/SBTraceOptions.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/lldb-types.h"
-
-namespace intelpt_private {
-class Instruction;
-class TraceOptions;
-class Decoder;
-class FunctionSegment;
-class ThreadTrace;
-} // namespace intelpt_private
 
 namespace intelpt {
 
@@ -37,9 +30,9 @@ namespace intelpt {
 ///     context.
 class PTInstruction {
 public:
-  PTInstruction() = default;
+  PTInstruction();
 
-  PTInstruction(intelpt_private::Instruction *ptr);
+  PTInstruction(intelpt_private::InstructionSP insn);
 
   ~PTInstruction();
 
@@ -74,8 +67,10 @@ public:
 
   bool IsError() const;
 
+  size_t GetID() const;
+
 private:
-  intelpt_private::Instruction *m_opaque_ptr;
+  intelpt_private::InstructionSP m_opaque_sp;
 };
 
 /// \class PTInstructionList
@@ -88,18 +83,15 @@ public:
 
   // Get instruction at index
   PTInstruction GetInstructionAtIndex(uint32_t idx);
+  void SetSP(std::shared_ptr<intelpt_private::InstructionList> sp);
+
 private:
-  friend class PTManager;
-
-  void
-  SetPtr(std::vector<intelpt_private::Instruction> *ptr);
-
-  std::vector<intelpt_private::Instruction> *m_opaque_ptr;
+  std::shared_ptr<intelpt_private::InstructionList> m_opaque_sp;
 };
 
 class PTFunctionSegment {
 public:
-  PTFunctionSegment(intelpt_private::FunctionSegment *segment);
+  PTFunctionSegment(intelpt_private::FunctionSegmentSP segment);
 
   const char *GetFunctionName() const;
 
@@ -109,13 +101,15 @@ public:
 
   lldb::addr_t GetEndLoadAddress() const;
 
+  PTInstruction GetFirstInstruction() const;
+
   size_t GetID() const;
 
   int GetLevel() const;
   PTFunctionSegment();
 
 private:
-  intelpt_private::FunctionSegment *m_opaque_ptr;
+  intelpt_private::FunctionSegmentSP m_opaque_sp;
 };
 
 class PTFunctionCallTree {
@@ -126,18 +120,19 @@ public:
 
   size_t GetSize() const;
 
+  void SetPtr(std::vector<intelpt_private::FunctionSegmentSP> *ptr);
+
 private:
-  friend class PTThreadTrace;
-
-  void
-  SetPtr(std::vector<std::shared_ptr<intelpt_private::FunctionSegment>> *ptr);
-
-  std::vector<std::shared_ptr<intelpt_private::FunctionSegment>> *m_opaque_ptr;
+  std::vector<intelpt_private::FunctionSegmentSP> *m_opaque_ptr;
 };
 
 class PTThreadTrace {
 public:
   PTFunctionCallTree GetFunctionCallTree();
+
+  void GetInstructionLogAtOffset(uint32_t offset, uint32_t count,
+                                 PTInstructionList &result_list,
+                                 lldb::SBError &sberror);
 
   size_t GetPosition();
 
@@ -149,11 +144,9 @@ public:
 
   PTInstruction GetCurrentInstruction();
 
-private:
-  friend class PTManager;
-
   void SetPtr(intelpt_private::ThreadTrace *ptr);
 
+private:
   intelpt_private::ThreadTrace *m_opaque_ptr;
 };
 
@@ -261,44 +254,6 @@ public:
   ///     An error with the failure reason if API fails. Else success.
   void StopProcessorTrace(lldb::SBProcess &sbprocess, lldb::SBError &sberror,
                           lldb::tid_t tid = LLDB_INVALID_THREAD_ID);
-
-  /// Get instruction log containing the execution flow for a thread of a
-  /// process in terms of assembly instructions executed.
-  ///
-  /// \param[in] sbprocess
-  ///     A valid process on which this operation will be performed. An error is
-  ///     returned in case of an invalid process.
-  ///
-  /// \param[in] tid
-  ///     A valid thread id of the thread for which instruction log is desired.
-  ///     If sbprocess doesn't contain the thread tid, error will be returned.
-  ///
-  /// \param[in] count
-  ///     The number of instructions requested by the user to be returned from
-  ///     the complete instruction log. Complete instruction log refers to all
-  ///     the assembly instructions obtained after decoding the complete raw
-  ///     trace data obtained from LLDB. The length of the complete instruction
-  ///     log is dependent on the trace buffer size with which processor tracing
-  ///     was started for this thread.
-  ///     The number of instructions actually returned are dependent on 'count'
-  ///     and 'offset' parameters of this API.
-  ///
-  /// \param[in] offset
-  ///     The offset in the complete instruction log from where 'count' number
-  ///     of instructions are requested by the user. offset is counted from the
-  ///     end of of this complete instruction log (which means the last executed
-  ///     instruction is at offset 0 (zero)).
-  ///
-  /// \param[out] result_list
-  ///     Depending upon 'count' and 'offset' values, list will be overwritten
-  ///     with the new instructions.
-  ///
-  /// \param[out] sberror
-  ///     An error with the failure reason if API fails. Else success.
-  void GetInstructionLogAtOffset(lldb::SBProcess &sbprocess, lldb::tid_t tid,
-                                 uint32_t offset, uint32_t count,
-                                 PTInstructionList &result_list,
-                                 lldb::SBError &sberror);
 
   PTThreadTrace GetThreadTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
                                lldb::SBError &sberror);

@@ -21,7 +21,6 @@ bool ProcessorTraceBacktrace::DoExecute(lldb::SBDebugger debugger, char **comman
     return false;
 
   // Default initialize API's arguments
-  size_t position;
   lldb::tid_t thread_id;
 
   // Parse command line options
@@ -75,9 +74,12 @@ bool ProcessorTraceBacktrace::DoExecute(lldb::SBDebugger debugger, char **comman
     result.Printf("\t frame #%zu: ", i);
 
     if (load_address != LLDB_INVALID_ADDRESS)
-      result.Printf("%s0x%16.16" PRIx64 "%s", yellowColor, load_address, defaultColor);
+      result.Printf("[%10zu] %s0x%16.16" PRIx64 "%s",
+                    segment.GetFirstInstruction().GetID(), yellowColor,
+                    load_address, defaultColor);
     else
-      result.Printf("unknown .          ");
+      result.Printf("[ .         ] %s0x%16.16" PRIx64 "%s", yellowColor,
+                    load_address, defaultColor);
 
     result.Printf(" ");
 

@@ -14,36 +14,36 @@ class FunctionCallTreeBuilder {
 public:
   FunctionCallTreeBuilder() = delete;
 
+  FunctionCallTreeBuilder(const FunctionCallTreeBuilder &builder) = delete;
+
   FunctionCallTreeBuilder(lldb::SBProcess &process);
 
-  void AppendInstruction(Instruction &insn);
+  void AppendInstruction(const InstructionSP &insn);
 
-  void Finalize(std::vector<std::shared_ptr<FunctionSegment>> &segments);
+  void Finalize(std::vector<FunctionSegmentSP> &segments);
 
   void AppendNewSwitchFunctionSegment(const lldb::SBFunction &sbfunction,
                                       const lldb::SBSymbol &symbol,
-                                      Instruction &insn);
+                                      const InstructionSP &insn);
 
   void AppendNewCallFunctionSegment(const lldb::SBFunction &sbfunction,
                                     const lldb::SBSymbol &symbol,
-                                    Instruction &insn);
+                                    const InstructionSP &insn);
 
   void AppendNewTailCallFunctionSegment(const lldb::SBFunction &sbfunction,
                                         const lldb::SBSymbol &symbol,
-                                        Instruction &insn);
+                                        const InstructionSP &insn);
 
   /* Add a continuation segment for a function into which we return at the end
      of the trace. */
   void AppendNewReturnFunctionSegment(lldb::SBFunction &sbfunction,
                                       lldb::SBSymbol &symbol,
-                                      Instruction &insn);
+                                      const InstructionSP &insn);
 
-  void UpdateFunctionSegmentsWithErrorInstruction(Instruction &insn);
-
-  void AppendPC(lldb::tid_t tid);
+  void UpdateFunctionSegmentsWithErrorInstruction(const InstructionSP &insn);
 
 private:
-  std::vector<std::shared_ptr<FunctionSegment>> m_segments;
+  std::vector<FunctionSegmentSP> m_segments;
   lldb::SBProcess m_process;
 };
 

@@ -2,19 +2,18 @@
 
 using namespace intelpt_private;
 
-static int global_id = 0;
-FunctionSegment::FunctionSegment(Instruction *insn_error, int level)
+FunctionSegment::FunctionSegment(size_t id, const InstructionSP &insn_error,
+                                 int level)
     : m_id(global_id++), m_insn_first(insn_error), m_insn_last(insn_error),
-      m_level(level), m_is_gap(true), m_parent(nullptr), m_prev(nullptr),
-      m_next(nullptr) {}
+      m_level(level), m_is_gap(true), m_parent(), m_prev(), m_next() {}
 
-FunctionSegment::FunctionSegment(const lldb::SBFunction &function,
+FunctionSegment::FunctionSegment(size_t id, const lldb::SBFunction &function,
                                  const lldb::SBSymbol &symbol,
-                                 Instruction *insn, int level,
-                                 FunctionSegment *parent)
-    : m_id(global_id++), m_function(function), m_symbol(symbol),
-      m_insn_first(insn), m_insn_last(insn), m_level(level), m_is_gap(false),
-      m_parent(parent), m_prev(nullptr), m_next(nullptr) {}
+                                 const InstructionSP &insn, int level,
+                                 const FunctionSegmentSP &parent)
+    : m_id(id), m_function(function), m_symbol(symbol), m_insn_first(insn),
+      m_insn_last(insn), m_level(level), m_is_gap(false), m_parent(parent),
+      m_prev(), m_next() {}
 
 bool FunctionSegment::IsGap() const { return m_is_gap; }
 
@@ -22,11 +21,11 @@ int FunctionSegment::GetLevel() const { return m_level; }
 
 void FunctionSegment::SetLevel(int level) { m_level = level; }
 
-const lldb::SBFunction &FunctionSegment::GetSBFunction() const {
+const lldb::SBFunction FunctionSegment::GetSBFunction() const {
   return m_function;
 }
 
-const lldb::SBSymbol &FunctionSegment::GetSymbol() const { return m_symbol; }
+const lldb::SBSymbol FunctionSegment::GetSymbol() const { return m_symbol; }
 
 const char *FunctionSegment::GetFunctionName() {
   if (m_function.IsValid())
@@ -52,24 +51,32 @@ lldb::addr_t FunctionSegment::GetEndLoadAddress() const {
   return m_insn_last->GetInsnAddress();
 }
 
-FunctionSegment *FunctionSegment::GetParent() const { return m_parent; }
+FunctionSegmentSP FunctionSegment::GetParent() const { return m_parent; }
 
-void FunctionSegment::SetParent(FunctionSegment *parent) { m_parent = parent; }
-
-void FunctionSegment::AppendInstruction(Instruction *insn) {
-  m_insn_last = insn;
-  insn->SetFunctionSegment(this);
+void FunctionSegment::SetParent(const FunctionSegmentSP &parent) {
+  m_parent = parent;
 }
 
-FunctionSegment *FunctionSegment::GetNext() const { return m_next; }
+void FunctionSegment::AppendInstruction(const InstructionSP &insn) {
+  m_insn_last = insn;
+  insn->SetFunctionSegment(shared_from_this());
+}
 
-Instruction *FunctionSegment::GetLastInstruction() const { return m_insn_last; }
+FunctionSegmentSP FunctionSegment::GetNext() const { return m_next.lock(); }
 
-FunctionSegment *FunctionSegment::GetPrev() const { return m_prev; }
+InstructionSP FunctionSegment::GetLastInstruction() const {
+  return m_insn_last;
+}
 
-void FunctionSegment::SetNextSegment(FunctionSegment *next_segment) {
+InstructionSP FunctionSegment::GetFirstInstruction() const {
+  return m_insn_first;
+}
+
+FunctionSegmentSP FunctionSegment::GetPrev() const { return m_prev; }
+
+void FunctionSegment::SetNextSegment(const FunctionSegmentSP &next_segment) {
   m_next = next_segment;
-  next_segment->m_prev = this;
+  next_segment->m_prev = shared_from_this();
 
   next_segment->SetLevel(GetLevel());
   next_segment->SetParent(GetParent());

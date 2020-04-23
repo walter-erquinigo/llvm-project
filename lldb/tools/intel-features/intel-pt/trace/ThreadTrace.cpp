@@ -9,7 +9,6 @@ ThreadTrace::ThreadTrace()
     : m_pt_buffer(), m_readExecuteSectionInfos(), m_thread_stop_id(0),
       m_trace(), m_pt_cpu(), m_instruction_log(), m_insn_position(0) {}
 
-ThreadTrace::ThreadTrace(const ThreadTrace &trace_info) = default;
 
 ThreadTrace::~ThreadTrace() {}
 
@@ -30,13 +29,12 @@ const InstructionList &ThreadTrace::GetInstructionLog() {
 }
 
 void ThreadTrace::SetInstructionLog(InstructionList &instruction_log) {
-  m_instruction_log = std::move(instruction_log);
+  m_instruction_log.assign(instruction_log.begin(), instruction_log.end());
   assert(!m_instruction_log.empty());
   m_insn_position = m_instruction_log.size() - 1;
 }
 
-std::vector<std::shared_ptr<FunctionSegment>> &
-ThreadTrace::GetFunctionCallTree() {
+std::vector<FunctionSegmentSP> &ThreadTrace::GetFunctionCallTree() {
   return m_function_call_tree;
 }
 
@@ -89,13 +87,15 @@ void ThreadTrace::GetInstructionLogAtOffset(uint32_t offset, uint32_t count,
   }
 }
 
-Instruction &ThreadTrace::GetCurrentInstruction() {
+InstructionSP ThreadTrace::GetCurrentInstruction() {
   return m_instruction_log[GetPosition()];
 }
 
-std::vector<FunctionSegment *> ThreadTrace::GetFrames() {
-  std::vector<FunctionSegment *> frames;
-  for (FunctionSegment *segment = GetCurrentInstruction().GetFunctionSegment(); segment != nullptr; segment = segment->GetParent())
+std::vector<FunctionSegmentSP> ThreadTrace::GetFrames() {
+  std::vector<FunctionSegmentSP> frames;
+  for (FunctionSegmentSP segment =
+           GetCurrentInstruction()->GetFunctionSegment();
+       segment; segment = segment->GetParent())
     frames.push_back(segment);
   return frames;
 }

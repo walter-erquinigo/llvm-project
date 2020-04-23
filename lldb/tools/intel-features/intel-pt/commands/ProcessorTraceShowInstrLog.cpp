@@ -77,10 +77,18 @@
       if (!offset_provided)
         offset = count - 1;
 
+      intelpt::PTThreadTrace thread_trace =
+          pt_decoder_sp->GetThreadTrace(process, thread_id, error);
+      if (!error.Success()) {
+        res.Printf("thread #%" PRIu32 ": tid=%" PRIu64 ", error: %s",
+                   thread.GetIndexID(), thread_id, error.GetCString());
+        result.AppendMessage(res.GetOutput());
+        continue;
+      }
+
       // Get the instruction log
       intelpt::PTInstructionList insn_list;
-      pt_decoder_sp->GetInstructionLogAtOffset(process, thread_id, offset,
-                                               count, insn_list, error);
+      thread_trace.GetInstructionLogAtOffset(offset, count, insn_list, error);
       if (!error.Success()) {
         res.Printf("thread #%" PRIu32 ": tid=%" PRIu64 ", error: %s",
                    thread.GetIndexID(), thread_id, error.GetCString());
@@ -97,6 +105,8 @@
       lldb::SBCommandReturnObject result_obj;
       for (size_t i = 0; i < insn_list.GetSize(); i++) {
         intelpt::PTInstruction insn = insn_list.GetInstructionAtIndex(i);
+        res.Printf("[%10zu]", insn.GetID());
+
         uint64_t addr = insn.GetInsnAddress();
         if (insn.IsError()) {
           res.Printf("Intel-PT decoder error: %s\n", insn.GetError());

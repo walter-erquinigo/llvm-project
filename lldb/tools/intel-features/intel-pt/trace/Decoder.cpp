@@ -331,14 +331,18 @@ void Decoder::DecodeProcessorTrace(lldb::SBProcess &sbprocess, lldb::tid_t tid,
   raw_current_insn.ip = sbprocess.GetThreadByID(tid).GetFrameAtIndex(0).GetPC();
   raw_current_insn.size = 1; // fake
   raw_current_insn.iclass = ptic_other;
-  Instruction *current_insn = new Instruction(raw_current_insn);
-  instruction_list.push_back(*current_insn);
-  // instruction_list.push_back(i)
+  InstructionSP current_insn =
+      std::make_shared<Instruction>(instruction_list.size(), raw_current_insn);
+  instruction_list.push_back(current_insn);
 
   // reconstruct functions
   FunctionCallTreeBuilder builder(sbprocess);
-  for (size_t i = 0; i < instruction_list.size(); i++)
+  for (size_t i = 0; i < instruction_list.size(); i++) {
     builder.AppendInstruction(instruction_list[i]);
+    if (!instruction_list[i]->GetFunctionSegment()) {
+      abort();
+    }
+  }
 
   // We include the current PC to be able to have the backtrace at the current
   // position
@@ -598,7 +602,8 @@ int Decoder::HandlePTInstructionEvents(pt_insn_decoder *decoder, int errcode,
     // https://github.com/intel/libipt/blob/master/doc/man/pt_qry_event.3.md
     if (event.type == ptev_overflow ||
         (event.type == ptev_enabled && event.variant.enabled.resumed == 0)) {
-      instruction_list.emplace_back(errcode);
+      instruction_list.push_back(
+          std::make_shared<Instruction>(instruction_list.size(), errcode));
     }
     // Other events don't signal stream errors
   }
@@ -626,12 +631,14 @@ void Decoder::DecodeTrace(struct pt_insn_decoder *decoder,
 
       int errcode_off = pt_insn_get_offset(decoder, &decoder_offset);
       if (errcode_off < 0) {
-        instruction_list.emplace_back(errcode_off);
+        instruction_list.push_back(std::make_shared<Instruction>(
+            instruction_list.size(), errcode_off));
         return;
       }
 
       // There's a gap because we couldn't synchronize in the first place.
-      instruction_list.emplace_back(errcode);
+      instruction_list.push_back(
+          std::make_shared<Instruction>(instruction_list.size(), errcode));
       while (1) {
         errcode = pt_insn_sync_forward(decoder);
         if (errcode >= 0)
@@ -643,7 +650,8 @@ void Decoder::DecodeTrace(struct pt_insn_decoder *decoder,
         uint64_t new_decoder_offset = 0;
         errcode_off = pt_insn_get_offset(decoder, &new_decoder_offset);
         if (errcode_off < 0) {
-          instruction_list.emplace_back(errcode_off);
+          instruction_list.push_back(std::make_shared<Instruction>(
+              instruction_list.size(), errcode_off));
           return;
         } else if (new_decoder_offset <= decoder_offset) {
           // We tried resyncing the decoder and decoder didn't make any
@@ -658,7 +666,8 @@ void Decoder::DecodeTrace(struct pt_insn_decoder *decoder,
     while (1) {
       errcode = HandlePTInstructionEvents(decoder, errcode, instruction_list);
       if (errcode < 0) {
-        instruction_list.emplace_back(errcode);
+        instruction_list.push_back(
+            std::make_shared<Instruction>(instruction_list.size(), errcode));
         break;
       }
       errcode = pt_insn_next(decoder, &insn, sizeof(insn));
@@ -666,15 +675,18 @@ void Decoder::DecodeTrace(struct pt_insn_decoder *decoder,
         if (insn.iclass == ptic_error)
           break;
 
-        instruction_list.emplace_back(insn);
+        instruction_list.push_back(
+            std::make_shared<Instruction>(instruction_list.size(), insn));
 
         if (errcode == -pte_eos)
           return;
 
-        instruction_list.emplace_back(errcode);
+        instruction_list.push_back(
+            std::make_shared<Instruction>(instruction_list.size(), errcode));
         break;
       }
-      instruction_list.emplace_back(insn);
+      instruction_list.push_back(
+          std::make_shared<Instruction>(instruction_list.size(), insn));
       if (errcode & pts_eos)
         return;
     }

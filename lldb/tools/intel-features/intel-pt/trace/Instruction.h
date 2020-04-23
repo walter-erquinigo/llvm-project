@@ -4,10 +4,10 @@
 #include <vector>
 
 #include "intel-pt.h"
+#include "intelpt_private-forward.h"
 #include "lldb/lldb-types.h"
 
 namespace intelpt_private {
-class FunctionSegment;
 
 /// \class Instruction
 /// Represents an assembly instruction containing raw
@@ -16,13 +16,13 @@ class FunctionSegment;
 ///     context.
 class Instruction {
 public:
-  Instruction();
+  Instruction() = delete;
 
-  Instruction(const Instruction &insn) = default;
+  Instruction(const Instruction &insn) = delete;
 
-  Instruction(const struct pt_insn &insn);
+  Instruction(size_t id, const struct pt_insn &insn);
 
-  Instruction(int error_code);
+  Instruction(size_t id, int error_code);
 
   ~Instruction();
 
@@ -40,12 +40,15 @@ public:
 
   bool IsError() const;
 
-  FunctionSegment *GetFunctionSegment() const;
+  FunctionSegmentSP GetFunctionSegment() const;
 
-  void SetFunctionSegment(FunctionSegment *segment);
+  void SetFunctionSegment(const FunctionSegmentSP &segment);
+
+  size_t GetID() const;
 
 private:
-  FunctionSegment *m_function_segment;
+  size_t m_id;
+  std::weak_ptr<FunctionSegment> m_function_segment;
   lldb::addr_t ip;           // instruction address in inferior's memory image
   std::vector<uint8_t> data; // raw bytes
   int m_error_code;         // libipt error code if instruction is invalid
@@ -53,7 +56,4 @@ private:
   // A collection of flags giving additional information about instruction
   uint32_t speculative : 1; // Instruction was executed speculatively or not
 };
-
-typedef std::vector<Instruction> InstructionList;
-
 } // namespace intelpt_private

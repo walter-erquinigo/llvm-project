@@ -1,5 +1,6 @@
 #include <cinttypes>
 #include <cstring>
+#include <sstream>
 
 #include "CommandUtils.h"
 #include "ProcessorTraceGoTo.h"
@@ -56,7 +57,6 @@ bool ProcessorTraceGoTo::DoExecute(lldb::SBDebugger debugger, char **command,
     return false;
   }
 
-  printf("before position %zu\n", thread_trace.GetPosition());
   thread_trace.SetPosition(position, error);
   if (!error.Success()) {
     result.AppendMessage(error.GetCString());
@@ -64,7 +64,10 @@ bool ProcessorTraceGoTo::DoExecute(lldb::SBDebugger debugger, char **command,
     return false;
   }
 
-  printf("after position %zu\n", thread_trace.GetPosition());
+  std::ostringstream backtrace_command;
+  backtrace_command << "processor-trace backtrace " << thread_id;
+  debugger.GetCommandInterpreter().HandleCommand(
+      backtrace_command.str().c_str(), result);
 
   result.SetStatus(lldb::eReturnStatusSuccessFinishResult);
   return true;

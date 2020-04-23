@@ -34,7 +34,7 @@ class ThreadTrace {
 public:
   ThreadTrace();
 
-  ThreadTrace(const ThreadTrace &trace_info);
+  ThreadTrace(const ThreadTrace &trace_info) = delete;
 
   ~ThreadTrace();
 
@@ -50,7 +50,7 @@ public:
 
   void SetInstructionLog(InstructionList &instruction_log);
 
-  std::vector<std::shared_ptr<FunctionSegment>> &GetFunctionCallTree();
+  std::vector<FunctionSegmentSP> &GetFunctionCallTree();
 
   void GetInstructionLogAtOffset(uint32_t offset, uint32_t count,
                                  InstructionList &result_list,
@@ -68,9 +68,9 @@ public:
 
   void SetPosition(size_t position, lldb::SBError &sberror);
 
-  std::vector<FunctionSegment *> GetFrames();
+  std::vector<FunctionSegmentSP> GetFrames();
 
-  Instruction &GetCurrentInstruction();
+  InstructionSP GetCurrentInstruction();
 
   friend class Decoder;
 
