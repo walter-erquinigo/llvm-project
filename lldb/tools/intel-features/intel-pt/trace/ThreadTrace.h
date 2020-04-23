@@ -68,7 +68,7 @@ public:
 
   void SetPosition(size_t position, lldb::SBError &sberror);
 
-  std::vector<FunctionSegmentSP> GetFrames();
+  void GetFrames(std::vector<FrameSP> &frames);
 
   InstructionSP GetCurrentInstruction();
 

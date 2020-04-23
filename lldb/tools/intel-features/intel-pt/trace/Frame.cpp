@@ -7,10 +7,10 @@ using namespace intelpt_private;
 
 Frame::Frame(const FunctionSegmentSP &segment, const InstructionSP &instruction): m_segment(segment), m_insn(instruction) {}
 
-lldb::addr_t Frame::GetLoadAddress() const {
-  return m_insn ? m_insn->GetInsnAddress() : LLDB_INVALID_ADDRESS;
+InstructionSP Frame::GetInstruction() const {
+  return m_insn;
 }
 
-const char* Frame::GetDisplayName() const {
-  return m_segment->GetDisplayName();
+FunctionSegmentSP Frame::GetFunctionSegment() const {
+  return m_segment;
 }

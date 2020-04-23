@@ -9,9 +9,9 @@ class Frame {
  public:
   Frame(const FunctionSegmentSP &segment, const InstructionSP &instruction);
 
-  lldb::addr_t GetLoadAddress() const;
+  InstructionSP GetInstruction() const;
 
-  const char *GetDisplayName() const;
+  FunctionSegmentSP GetFunctionSegment() const;
 
  private:
   FunctionSegmentSP m_segment;

@@ -67,7 +67,7 @@ public:
 
   bool IsError() const;
 
-  size_t GetID() const;
+  int GetID() const;
 
 private:
   intelpt_private::InstructionSP m_opaque_sp;
@@ -112,6 +112,34 @@ private:
   intelpt_private::FunctionSegmentSP m_opaque_sp;
 };
 
+class PTFrame {
+ public:
+  PTFrame();
+
+  PTFrame(intelpt_private::FrameSP sp);
+
+  PTInstruction GetInstruction() const;
+
+  PTFunctionSegment GetFunctionSegment() const;
+
+ private:
+  intelpt_private::FrameSP m_opaque_sp;
+};
+
+class PTFrameList {
+ public:
+  PTFrameList();
+
+  PTFrameList(std::shared_ptr<intelpt_private::FrameList> sp);
+
+  size_t GetNumFrames() const;
+
+  PTFrame GetFrameAtIndex(size_t index) const;
+
+ private:
+   std::shared_ptr<intelpt_private::FrameList> m_opaque_sp;
+};
+
 class PTFunctionCallTree {
 public:
   PTFunctionCallTree();
@@ -138,9 +166,7 @@ public:
 
   void SetPosition(size_t position, lldb::SBError &sberror);
 
-  size_t GetNumFrames();
-
-  PTFunctionSegment GetFrameAtIndex(size_t index);
+  PTFrameList GetFrames();
 
   PTInstruction GetCurrentInstruction();
 

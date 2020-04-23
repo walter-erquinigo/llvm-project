@@ -60,28 +60,19 @@ bool ProcessorTraceBacktrace::DoExecute(lldb::SBDebugger debugger, char **comman
 
   result.Printf("thread #%lu\n", thread_id);
 
-  int prev_segment_id = -1;
-  for (size_t i = 0; i < thread_trace.GetNumFrames(); i++) {
-    intelpt::PTFunctionSegment segment = thread_trace.GetFrameAtIndex(i);
-    lldb::addr_t load_address = LLDB_INVALID_ADDRESS;
-    if (i == 0)
-      load_address = thread_trace.GetCurrentInstruction().GetInsnAddress();
-    else if ((int)segment.GetID() < prev_segment_id) {
-      // We know when this segment called the previous one
-      load_address = segment.GetEndLoadAddress();
-    }
+  intelpt::PTFrameList frame_list = thread_trace.GetFrames();
+  for (size_t i = 0; i < frame_list.GetNumFrames(); i++) {
+    result.Printf("\t frame #%zu:\t", i);
 
-    result.Printf("\t frame #%zu: ", i);
+    intelpt::PTFrame frame = frame_list.GetFrameAtIndex(i);
+    intelpt::PTInstruction insn = frame.GetInstruction();
+    lldb::addr_t load_address = insn.GetInsnAddress();
 
-    if (load_address != LLDB_INVALID_ADDRESS)
-      result.Printf("[%10zu] %s0x%16.16" PRIx64 "%s",
-                    segment.GetFirstInstruction().GetID(), yellowColor,
-                    load_address, defaultColor);
-    else
-      result.Printf("[ .         ] %s0x%16.16" PRIx64 "%s", yellowColor,
-                    load_address, defaultColor);
+    result.Printf("[%10d] %s0x%16.16" PRIx64 "%s ",
+                  insn.GetID(), yellowColor,
+                  load_address, defaultColor);
 
-    result.Printf(" ");
+    intelpt::PTFunctionSegment segment = frame.GetFunctionSegment();
 
     lldb::addr_t valid_load_address = load_address == LLDB_INVALID_ADDRESS ? segment.GetEndLoadAddress() : load_address;
     lldb::SBAddress valid_address(valid_load_address, target);
@@ -104,7 +95,6 @@ bool ProcessorTraceBacktrace::DoExecute(lldb::SBDebugger debugger, char **comman
         result.Printf(" + %lu", offset);
     }
     result.Printf("\n");
-    prev_segment_id = segment.GetID();
   }
 
   result.SetStatus(lldb::eReturnStatusSuccessFinishResult);

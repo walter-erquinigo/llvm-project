@@ -1,5 +1,6 @@
 #include "ThreadTrace.h"
 
+#include "Frame.h"
 #include <cassert>
 #include <cinttypes>
 
@@ -91,11 +92,22 @@ InstructionSP ThreadTrace::GetCurrentInstruction() {
   return m_instruction_log[GetPosition()];
 }
 
-std::vector<FunctionSegmentSP> ThreadTrace::GetFrames() {
-  std::vector<FunctionSegmentSP> frames;
-  for (FunctionSegmentSP segment =
-           GetCurrentInstruction()->GetFunctionSegment();
-       segment; segment = segment->GetParent())
-    frames.push_back(segment);
-  return frames;
+void ThreadTrace::GetFrames(std::vector<FrameSP> &frames) {
+  InstructionSP current_insn = GetCurrentInstruction();
+  FunctionSegmentSP segment = current_insn->GetFunctionSegment();
+  FunctionSegmentSP inner_segment;
+
+  do {
+    if (!inner_segment)
+      frames.push_back(std::make_shared<Frame>(segment, current_insn));
+    else if (inner_segment->GetID() > segment->GetID())
+      // We saw when inner_segment was called
+      frames.push_back(std::make_shared<Frame>(segment, segment->GetLastInstruction()));
+    else
+      // We only know that the inner_segment returns to this segment
+      frames.push_back(std::make_shared<Frame>(segment, InstructionSP()));
+
+    inner_segment = segment;
+    segment = inner_segment->GetParent();
+  } while(segment);
 }

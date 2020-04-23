@@ -105,7 +105,7 @@
       lldb::SBCommandReturnObject result_obj;
       for (size_t i = 0; i < insn_list.GetSize(); i++) {
         intelpt::PTInstruction insn = insn_list.GetInstructionAtIndex(i);
-        res.Printf("[%10zu]", insn.GetID());
+        res.Printf("[%10d]", insn.GetID());
 
         uint64_t addr = insn.GetInsnAddress();
         if (insn.IsError()) {
