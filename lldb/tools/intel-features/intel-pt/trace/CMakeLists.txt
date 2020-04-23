@@ -1,5 +1,6 @@
 add_lldb_library(lldbIntelPTTrace
   Decoder.cpp
+  Frame.cpp
   FunctionCallTreeBuilder.cpp
   FunctionSegment.cpp
   Instruction.cpp

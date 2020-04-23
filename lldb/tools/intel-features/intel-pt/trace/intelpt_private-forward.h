@@ -5,6 +5,7 @@
 
 namespace intelpt_private {
 class Decoder;
+class Frame;
 class FunctionSegment;
 class Instruction;
 class TraceOptions;
