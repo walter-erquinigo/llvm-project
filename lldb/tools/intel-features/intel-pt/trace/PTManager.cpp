@@ -81,26 +81,28 @@ PTInstruction PTFunctionSegment::GetFirstInstruction() const {
                      : PTInstruction();
 }
 
-
 // PTFrame
 
-PTFrame::PTFrame(): m_opaque_sp() {}
+PTFrame::PTFrame() : m_opaque_sp() {}
 
-PTFrame::PTFrame(intelpt_private::FrameSP sp): m_opaque_sp(sp) {}
+PTFrame::PTFrame(intelpt_private::FrameSP sp) : m_opaque_sp(sp) {}
 
 PTInstruction PTFrame::GetInstruction() const {
-  return m_opaque_sp ? PTInstruction(m_opaque_sp->GetInstruction()) : PTInstruction();
+  return m_opaque_sp ? PTInstruction(m_opaque_sp->GetInstruction())
+                     : PTInstruction();
 }
 
 PTFunctionSegment PTFrame::GetFunctionSegment() const {
-  return m_opaque_sp ? PTFunctionSegment(m_opaque_sp->GetFunctionSegment()) : PTFunctionSegment();
+  return m_opaque_sp ? PTFunctionSegment(m_opaque_sp->GetFunctionSegment())
+                     : PTFunctionSegment();
 }
 
 // PTFrameList
 
-PTFrameList::PTFrameList(): m_opaque_sp() {}
+PTFrameList::PTFrameList() : m_opaque_sp() {}
 
-PTFrameList::PTFrameList(std::shared_ptr<intelpt_private::FrameList> sp): m_opaque_sp(sp) {}
+PTFrameList::PTFrameList(std::shared_ptr<intelpt_private::FrameList> sp)
+    : m_opaque_sp(sp) {}
 
 size_t PTFrameList::GetNumFrames() const {
   return m_opaque_sp ? m_opaque_sp->size() : 0;
@@ -171,7 +173,6 @@ PTFrameList PTThreadTrace::GetFrames() {
   m_opaque_ptr->GetFrames(*sp);
   return PTFrameList(sp);
 }
-
 
 PTInstruction PTThreadTrace::GetCurrentInstruction() {
   return m_opaque_ptr ? PTInstruction(m_opaque_ptr->GetCurrentInstruction())

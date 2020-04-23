@@ -13,7 +13,7 @@ class Frame {
 
   FunctionSegmentSP GetFunctionSegment() const;
 
- private:
+private:
   FunctionSegmentSP m_segment;
   InstructionSP m_insn;
 };

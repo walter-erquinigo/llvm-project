@@ -113,7 +113,7 @@ private:
 };
 
 class PTFrame {
- public:
+public:
   PTFrame();
 
   PTFrame(intelpt_private::FrameSP sp);
@@ -122,12 +122,12 @@ class PTFrame {
 
   PTFunctionSegment GetFunctionSegment() const;
 
- private:
+private:
   intelpt_private::FrameSP m_opaque_sp;
 };
 
 class PTFrameList {
- public:
+public:
   PTFrameList();
 
   PTFrameList(std::shared_ptr<intelpt_private::FrameList> sp);
@@ -136,8 +136,8 @@ class PTFrameList {
 
   PTFrame GetFrameAtIndex(size_t index) const;
 
- private:
-   std::shared_ptr<intelpt_private::FrameList> m_opaque_sp;
+private:
+  std::shared_ptr<intelpt_private::FrameList> m_opaque_sp;
 };
 
 class PTFunctionCallTree {

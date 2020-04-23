@@ -16,10 +16,10 @@
 #include <string>
 #include <vector>
 
+#include "Frame.h"
 #include "FunctionSegment.h"
 #include "Instruction.h"
 #include "ThreadTrace.h"
-#include "Frame.h"
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBProcess.h"

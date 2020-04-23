@@ -102,12 +102,13 @@ void ThreadTrace::GetFrames(std::vector<FrameSP> &frames) {
       frames.push_back(std::make_shared<Frame>(segment, current_insn));
     else if (inner_segment->GetID() > segment->GetID())
       // We saw when inner_segment was called
-      frames.push_back(std::make_shared<Frame>(segment, segment->GetLastInstruction()));
+      frames.push_back(
+          std::make_shared<Frame>(segment, segment->GetLastInstruction()));
     else
       // We only know that the inner_segment returns to this segment
       frames.push_back(std::make_shared<Frame>(segment, InstructionSP()));
 
     inner_segment = segment;
     segment = inner_segment->GetParent();
-  } while(segment);
+  } while (segment);
 }

@@ -68,8 +68,7 @@ bool ProcessorTraceBacktrace::DoExecute(lldb::SBDebugger debugger, char **comman
     intelpt::PTInstruction insn = frame.GetInstruction();
     lldb::addr_t load_address = insn.GetInsnAddress();
 
-    result.Printf("[%10d] %s0x%16.16" PRIx64 "%s ",
-                  insn.GetID(), yellowColor,
+    result.Printf("[%10d] %s0x%16.16" PRIx64 "%s ", insn.GetID(), yellowColor,
                   load_address, defaultColor);
 
     intelpt::PTFunctionSegment segment = frame.GetFunctionSegment();
