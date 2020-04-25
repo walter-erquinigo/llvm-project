@@ -3,17 +3,17 @@
 #include <sstream>
 
 #include "CommandUtils.h"
-#include "ProcessorTraceReverseStepInst.h"
+#include "ProcessorTraceCommandStepping.h"
 #include "lldb/API/SBThread.h"
 
-ProcessorTraceReverseStepInst::ProcessorTraceReverseStepInst(
-    std::shared_ptr<intelpt::PTManager> &pt_decoder)
-    : ProcessorTraceCommand(), pt_decoder_sp(pt_decoder) {}
 
-ProcessorTraceReverseStepInst::~ProcessorTraceReverseStepInst() {}
+ProcessorTraceCommandStepping::ProcessorTraceCommandStepping(
+    std::shared_ptr<intelpt::PTManager> &pt_decoder, PTSteppingKind stepping_kind)
+    : ProcessorTraceCommand(), pt_decoder_sp(pt_decoder), m_stepping_kind(stepping_kind) {}
 
-bool ProcessorTraceReverseStepInst::DoExecute(lldb::SBDebugger debugger, char **command,
-                                   lldb::SBCommandReturnObject &result) {
+bool ProcessorTraceCommandStepping::DoExecute(
+    lldb::SBDebugger debugger, char **command,
+    lldb::SBCommandReturnObject &result) {
   lldb::SBProcess process;
   lldb::SBThread thread;
   if (!GetProcess(debugger, result, process))
@@ -53,8 +53,25 @@ bool ProcessorTraceReverseStepInst::DoExecute(lldb::SBDebugger debugger, char **
     return false;
   }
 
-  if (!thread_trace.ReverseStepInst()) {
-    result.AppendMessage("error: beginning of trace reached");
+
+  bool did_move = false;
+  switch (m_stepping_kind) {
+    case eStepInst:
+      did_move = thread_trace.StepInst();
+      break;
+    case eReverseStepInst:
+      did_move = thread_trace.ReverseStepInst();
+      break;
+    case eStepOver:
+      did_move = thread_trace.StepOver();
+      break;
+    case eReverseStepOver:
+      did_move = thread_trace.ReverseStepOver();
+      break;
+  }
+
+  if (!did_move) {
+    result.AppendMessage("error: end of trace reached");
     result.SetStatus(lldb::eReturnStatusFailed);
     return false;
   }
@@ -67,20 +84,3 @@ bool ProcessorTraceReverseStepInst::DoExecute(lldb::SBDebugger debugger, char **
   result.SetStatus(lldb::eReturnStatusSuccessFinishResult);
   return true;
 }
-
-const char *ProcessorTraceReverseStepInst::GetCommandName() { return "reverse-step-inst"; }
-
-const char *ProcessorTraceReverseStepInst::GetHelp() {
-  return "Move the trace position to the previous instruction.";
-}
-
-const char *ProcessorTraceReverseStepInst::GetSyntax() {
-  return "processor-trace reverse-step-inst <cmd-options>\n\n"
-         "\rcmd-options Usage:\n"
-         "\r  processor-trace reverse-step-in -t [<thread-index>]\n\n"
-         "\t\b-t <thread-index>\n"
-         "\t    thread index of the thread. If no threads are specified, "
-         "the currently selected thread is taken.\n";
-}
-
-const char *ProcessorTraceReverseStepInst::GetAlias() { return "ptrsi"; }
