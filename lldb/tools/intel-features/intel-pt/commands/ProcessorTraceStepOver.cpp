@@ -3,16 +3,16 @@
 #include <sstream>
 
 #include "CommandUtils.h"
-#include "ProcessorTraceReverseStepOver.h"
+#include "ProcessorTraceStepOver.h"
 #include "lldb/API/SBThread.h"
 
-ProcessorTraceReverseStepOver::ProcessorTraceReverseStepOver(
+ProcessorTraceStepOver::ProcessorTraceStepOver(
     std::shared_ptr<intelpt::PTManager> &pt_decoder)
     : ProcessorTraceCommand(), pt_decoder_sp(pt_decoder) {}
 
-ProcessorTraceReverseStepOver::~ProcessorTraceReverseStepOver() {}
+ProcessorTraceStepOver::~ProcessorTraceStepOver() {}
 
-bool ProcessorTraceReverseStepOver::DoExecute(
+bool ProcessorTraceStepOver::DoExecute(
     lldb::SBDebugger debugger, char **command,
     lldb::SBCommandReturnObject &result) {
   lldb::SBProcess process;
@@ -54,7 +54,7 @@ bool ProcessorTraceReverseStepOver::DoExecute(
     return false;
   }
 
-  if (!thread_trace.ReverseStepOver()) {
+  if (!thread_trace.StepOver()) {
     result.AppendMessage("error: beginning of trace reached");
     result.SetStatus(lldb::eReturnStatusFailed);
     return false;
@@ -69,21 +69,21 @@ bool ProcessorTraceReverseStepOver::DoExecute(
   return true;
 }
 
-const char *ProcessorTraceReverseStepOver::GetCommandName() {
-  return "reverse-step-over";
+const char *ProcessorTraceStepOver::GetCommandName() {
+  return "step-over";
 }
 
-const char *ProcessorTraceReverseStepOver::GetHelp() {
-  return "Move the trace position over to the previous source-level position.";
+const char *ProcessorTraceStepOver::GetHelp() {
+  return "Move the trace position over to the next source-level position.";
 }
 
-const char *ProcessorTraceReverseStepOver::GetSyntax() {
-  return "processor-trace reverse-step-over <cmd-options>\n\n"
+const char *ProcessorTraceStepOver::GetSyntax() {
+  return "processor-trace step-over <cmd-options>\n\n"
          "\rcmd-options Usage:\n"
-         "\r  processor-trace reverse-step-over -t [<thread-index>]\n\n"
+         "\r  processor-trace step-over -t [<thread-index>]\n\n"
          "\t\b-t <thread-index>\n"
          "\t    thread index of the thread. If no threads are specified, "
          "the currently selected thread is taken.\n";
 }
 
-const char *ProcessorTraceReverseStepOver::GetAlias() { return "ptrn"; }
+const char *ProcessorTraceStepOver::GetAlias() { return "ptn"; }

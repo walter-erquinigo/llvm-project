@@ -146,7 +146,9 @@ void Decoder::StartProcessorTrace(lldb::SBProcess &sbprocess,
   MapThreadID_TraceInfo &mapThreadID_TraceInfo =
       m_mapProcessUID_mapThreadID_TraceInfo[unique_id];
   ThreadTrace &trace_info =
-      mapThreadID_TraceInfo.emplace(tid, sbprocess.GetThreadByID(tid))
+      mapThreadID_TraceInfo.emplace(std::piecewise_construct,
+          std::forward_as_tuple(tid),
+          std::forward_as_tuple(sbprocess.GetThreadByID(tid), sbprocess.GetTarget()))
           .first->second;
   trace_info.SetUniqueTraceInstance(trace);
   trace_info.SetStopID(sbprocess.GetStopID());
@@ -837,7 +839,9 @@ void Decoder::FetchAndDecode(lldb::SBProcess &sbprocess, lldb::tid_t tid,
 
     lldb::SBTrace &trace = itr_thread->second.GetUniqueTraceInstance();
     ThreadTrace &trace_info =
-        mapThreadID_TraceInfo.emplace(tid, sbprocess.GetThreadByID(tid))
+        mapThreadID_TraceInfo.emplace(std::piecewise_construct,
+            std::forward_as_tuple(tid),
+            std::forward_as_tuple(sbprocess.GetThreadByID(tid), sbprocess.GetTarget()))
             .first->second;
     trace_info.SetUniqueTraceInstance(trace);
     trace_info.SetStopID(sbprocess.GetStopID());

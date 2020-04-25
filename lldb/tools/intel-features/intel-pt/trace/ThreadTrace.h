@@ -1,12 +1,14 @@
 #pragma once
 
 #include <vector>
+#include <unordered_set>
 
 #include "FunctionSegment.h"
 #include "Instruction.h"
 #include "intel-pt.h"
 
 #include "lldb/API/SBError.h"
+#include "lldb/API/SBTarget.h"
 #include "lldb/API/SBThread.h"
 #include "lldb/API/SBTrace.h"
 
@@ -33,7 +35,7 @@ typedef std::vector<ReadExecuteSectionInfo> ReadExecuteSectionInfos;
 
 class ThreadTrace {
 public:
-  ThreadTrace(const lldb::SBThread &thread);
+  ThreadTrace(const lldb::SBThread &thread, const lldb::SBTarget &target);
 
   ThreadTrace(const ThreadTrace &trace_info) = delete;
 
@@ -73,16 +75,21 @@ public:
 
   InstructionSP GetCurrentInstruction();
 
-  bool ReverseStepInst();
+  bool ReverseStepInst(bool step_over = false);
 
-  bool StepInst();
+  bool StepInst(bool sttep_over = false);
 
   bool ReverseStepOver();
 
-  friend class Decoder;
+  bool StepOver();
 
 private:
+
+
+void GetBreakpointAddresses(std::unordered_set<lldb::addr_t> &bp_addresses);
+
   lldb::SBThread m_thread; // thread associated with this trace
+  lldb::SBTarget m_target; // target associated with this trace
   Buffer m_pt_buffer; // raw trace buffer
   ReadExecuteSectionInfos
       m_readExecuteSectionInfos; // inferior's memory image info

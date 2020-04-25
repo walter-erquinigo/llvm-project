@@ -24,6 +24,7 @@
 #include "commands/ProcessorTraceShowFunctionCallHistory.h"
 #include "commands/ProcessorTraceShowInstrLog.h"
 #include "commands/ProcessorTraceShowTraceOptions.h"
+#include "commands/ProcessorTraceStepOver.h"
 #include "commands/ProcessorTraceStart.h"
 #include "commands/ProcessorTraceStepInst.h"
 #include "commands/ProcessorTraceStop.h"
@@ -49,6 +50,7 @@ bool PTPluginInitialize(lldb::SBDebugger &debugger) {
       new ProcessorTraceReverseStepInst(PTManagerSP),
       new ProcessorTraceStepInst(PTManagerSP),
       new ProcessorTraceReverseStepOver(PTManagerSP),
+      new ProcessorTraceStepOver(PTManagerSP),
   };
 
   for (ProcessorTraceCommand *command : commands) {

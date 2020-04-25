@@ -59,10 +59,10 @@ bool ProcessorTraceReverseStepInst::DoExecute(lldb::SBDebugger debugger, char **
     return false;
   }
 
-  std::ostringstream backtrace_command;
-  backtrace_command << "processor-trace backtrace " << thread_id;
+  std::ostringstream source_command;
+  source_command << "source list -a " << thread_trace.GetCurrentInstruction().GetInsnAddress();
   debugger.GetCommandInterpreter().HandleCommand(
-      backtrace_command.str().c_str(), result);
+      source_command.str().c_str(), result);
 
   result.SetStatus(lldb::eReturnStatusSuccessFinishResult);
   return true;

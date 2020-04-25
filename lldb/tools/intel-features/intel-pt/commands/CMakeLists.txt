@@ -5,6 +5,7 @@ add_lldb_library(lldbIntelPTCommands
   ProcessorTraceStepInst.cpp
   ProcessorTraceReverseStepInst.cpp
   ProcessorTraceReverseStepOver.cpp
+  ProcessorTraceStepOver.cpp
   ProcessorTraceShowFunctionCallHistory.cpp
   ProcessorTraceShowInstrLog.cpp
   ProcessorTraceShowTraceOptions.cpp
