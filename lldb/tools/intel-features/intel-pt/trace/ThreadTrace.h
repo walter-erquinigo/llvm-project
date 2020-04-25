@@ -85,8 +85,14 @@ public:
 
 private:
 
+ enum Direction {
+  eDirectionForward = 0,
+  eDirectionReverse,
+ };
 
-void GetBreakpointAddresses(std::unordered_set<lldb::addr_t> &bp_addresses);
+ bool DoStepInst(bool step_over, Direction dir);
+
+ void GetBreakpointAddresses(std::unordered_set<lldb::addr_t> &bp_addresses);
 
   lldb::SBThread m_thread; // thread associated with this trace
   lldb::SBTarget m_target; // target associated with this trace
@@ -99,6 +105,6 @@ void GetBreakpointAddresses(std::unordered_set<lldb::addr_t> &bp_addresses);
   InstructionList m_instruction_log; // complete instruction log
   std::vector<std::shared_ptr<FunctionSegment>>
       m_function_call_tree; // complete function call tree
-  size_t m_insn_position;   // position of the instruction iterator
+  int m_insn_position;   // position of the instruction iterator
 };
 } // namespace intelpt_private

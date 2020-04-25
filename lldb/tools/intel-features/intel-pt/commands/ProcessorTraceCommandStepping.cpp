@@ -6,10 +6,11 @@
 #include "ProcessorTraceCommandStepping.h"
 #include "lldb/API/SBThread.h"
 
-
 ProcessorTraceCommandStepping::ProcessorTraceCommandStepping(
-    std::shared_ptr<intelpt::PTManager> &pt_decoder, PTSteppingKind stepping_kind)
-    : ProcessorTraceCommand(), pt_decoder_sp(pt_decoder), m_stepping_kind(stepping_kind) {}
+    std::shared_ptr<intelpt::PTManager> &pt_decoder,
+    PTSteppingKind stepping_kind)
+    : ProcessorTraceCommand(), pt_decoder_sp(pt_decoder),
+      m_stepping_kind(stepping_kind) {}
 
 bool ProcessorTraceCommandStepping::DoExecute(
     lldb::SBDebugger debugger, char **command,
@@ -53,21 +54,20 @@ bool ProcessorTraceCommandStepping::DoExecute(
     return false;
   }
 
-
   bool did_move = false;
   switch (m_stepping_kind) {
-    case eStepInst:
-      did_move = thread_trace.StepInst();
-      break;
-    case eReverseStepInst:
-      did_move = thread_trace.ReverseStepInst();
-      break;
-    case eStepOver:
-      did_move = thread_trace.StepOver();
-      break;
-    case eReverseStepOver:
-      did_move = thread_trace.ReverseStepOver();
-      break;
+  case eStepInst:
+    did_move = thread_trace.StepInst();
+    break;
+  case eReverseStepInst:
+    did_move = thread_trace.ReverseStepInst();
+    break;
+  case eStepOver:
+    did_move = thread_trace.StepOver();
+    break;
+  case eReverseStepOver:
+    did_move = thread_trace.ReverseStepOver();
+    break;
   }
 
   if (!did_move) {
@@ -77,9 +77,10 @@ bool ProcessorTraceCommandStepping::DoExecute(
   }
 
   std::ostringstream source_command;
-  source_command << "source list -a " << thread_trace.GetCurrentInstruction().GetInsnAddress();
-  debugger.GetCommandInterpreter().HandleCommand(
-      source_command.str().c_str(), result);
+  source_command << "source list -a "
+                 << thread_trace.GetCurrentInstruction().GetInsnAddress();
+  debugger.GetCommandInterpreter().HandleCommand(source_command.str().c_str(),
+                                                 result);
 
   result.SetStatus(lldb::eReturnStatusSuccessFinishResult);
   return true;
