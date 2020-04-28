@@ -83,6 +83,10 @@ public:
 
   bool StepOver();
 
+  bool Continue();
+
+  bool ReverseContinue();
+
 private:
 
  enum Direction {
@@ -91,6 +95,10 @@ private:
  };
 
  bool DoStepInst(bool step_over, Direction dir);
+
+ bool DoStepOver(Direction dir);
+
+ bool DoContinue(Direction dir);
 
  void GetBreakpointAddresses(std::unordered_set<lldb::addr_t> &bp_addresses);
 

@@ -12,6 +12,10 @@ ProcessorTraceCommandStepping::ProcessorTraceCommandStepping(
     : ProcessorTraceCommand(), pt_decoder_sp(pt_decoder),
       m_stepping_kind(stepping_kind) {}
 
+bool ProcessorTraceCommandStepping::SupportAutoRepeat() {
+  return true;
+}
+
 bool ProcessorTraceCommandStepping::DoExecute(
     lldb::SBDebugger debugger, char **command,
     lldb::SBCommandReturnObject &result) {
@@ -67,6 +71,12 @@ bool ProcessorTraceCommandStepping::DoExecute(
     break;
   case eReverseStepOver:
     did_move = thread_trace.ReverseStepOver();
+    break;
+  case eContinue:
+    did_move = thread_trace.Continue();
+    break;
+  case eReverseContinue:
+    did_move = thread_trace.ReverseContinue();
     break;
   }
 

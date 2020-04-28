@@ -122,10 +122,10 @@ void ThreadTrace::GetBreakpointAddresses(
   std::unordered_set<lldb::addr_t> &bp_addresses
 ) {
   for (size_t i = 0; i < m_target.GetNumBreakpoints(); i++) {
-    lldb::SBBreakpoint breakpoint = m_target.GetBreakpointAtIndex(0);
+    lldb::SBBreakpoint breakpoint = m_target.GetBreakpointAtIndex(i);
     for (size_t j = 0; j < breakpoint.GetNumLocations(); j++) {
       lldb::SBBreakpointLocation location = breakpoint.GetLocationAtIndex(j);
-      bp_addresses.insert(breakpoint.GetID());
+      bp_addresses.insert(location.GetLoadAddress());
     }
   }
 }
@@ -136,10 +136,10 @@ enum Direction {
 };
 
 // Reverse with direction
-bool ThreadTrace::DoStepInst(bool step_over, Direction dir) {
-  int delta = dir == eDirectionForward ? 1 : -1;
+bool ThreadTrace::DoStepInst(bool step_over, Direction direction) {
+  int delta = direction == eDirectionForward ? 1 : -1;
 
-  if (m_insn_position + delta < 0 || m_insn_position + delta >= m_instruction_log.size())
+  if (m_insn_position + delta < 0 || m_insn_position + delta >= (int)m_instruction_log.size())
     return false;
 
   if (!step_over) {
@@ -151,19 +151,19 @@ bool ThreadTrace::DoStepInst(bool step_over, Direction dir) {
   std::unordered_set<lldb::addr_t> bp_addresses;
   GetBreakpointAddresses(bp_addresses);
 
-  while (m_insn_position + delta >= 0 && m_insn_position + delta < m_instruction_log.size()) {
+  while (m_insn_position + delta >= 0 && m_insn_position + delta < (int)m_instruction_log.size()) {
     m_insn_position += delta;
 
     if (bp_addresses.count(m_instruction_log[m_insn_position]->GetInsnAddress()))
-      return true; // we stopped at a breakpoint
+      break; // we stopped at a breakpoint
 
     FunctionSegmentSP cur_segment = m_instruction_log[m_insn_position]->GetFunctionSegment();
     if (cur_segment->GetLevel() > start_segment->GetLevel())
       continue; // we've stepped in
 
-    return true;
+    break;
   }
-  return false;
+  return true;
 }
 
 bool ThreadTrace::ReverseStepInst(bool step_over) {
@@ -174,8 +174,39 @@ bool ThreadTrace::StepInst(bool step_over) {
   return DoStepInst(step_over, eDirectionForward);
 }
 
-bool ThreadTrace::ReverseStepOver() {
-  if (m_insn_position == 0)
+bool ThreadTrace::DoContinue(Direction direction) {
+  int delta = direction == eDirectionForward ? 1 : -1;
+
+  if (m_insn_position + delta < 0 || m_insn_position + delta >= (int)m_instruction_log.size())
+    return false;
+
+  std::unordered_set<lldb::addr_t> bp_addresses;
+  GetBreakpointAddresses(bp_addresses);
+
+
+  while (m_insn_position + delta >= 0 && m_insn_position + delta < (int)m_instruction_log.size()) {
+    m_insn_position += delta;
+
+    lldb::addr_t cur_address = m_instruction_log[m_insn_position]->GetInsnAddress();
+
+    if (bp_addresses.count(cur_address))
+      break; // we stopped at a breakpoint
+  }
+  return true;
+}
+
+bool ThreadTrace::Continue() {
+  return DoContinue(eDirectionForward);
+}
+
+bool ThreadTrace::ReverseContinue() {
+  return DoContinue(eDirectionReverse);
+}
+
+bool ThreadTrace::DoStepOver(Direction direction) {
+  int delta = direction == eDirectionForward ? 1 : -1;
+
+  if (m_insn_position + delta < 0 || m_insn_position + delta >= (int)m_instruction_log.size())
     return false;
 
   lldb::addr_t load_addresss = m_instruction_log[m_insn_position]->GetInsnAddress();
@@ -186,7 +217,7 @@ bool ThreadTrace::ReverseStepOver() {
 
   // We don't have line debug info
   if (!line_entry.IsValid())
-    return ReverseStepInst(true);
+    return DoStepInst(true, direction);
 
 
   lldb::addr_t start_address = line_entry.GetStartAddress().GetLoadAddress(m_target);
@@ -196,8 +227,13 @@ bool ThreadTrace::ReverseStepOver() {
   std::unordered_set<lldb::addr_t> bp_addresses;
   GetBreakpointAddresses(bp_addresses);
 
-  while (m_insn_position > 0) {
-    m_insn_position--;
+  while (m_insn_position + delta >= 0 && m_insn_position + delta < (int)m_instruction_log.size()) {
+    m_insn_position += delta;
+
+    lldb::addr_t cur_address = m_instruction_log[m_insn_position]->GetInsnAddress();
+
+    if (bp_addresses.count(cur_address))
+      break;; // we stopped at a breakpoint
 
     FunctionSegmentSP cur_segment = m_instruction_log[m_insn_position]->GetFunctionSegment();
 
@@ -205,59 +241,18 @@ bool ThreadTrace::ReverseStepOver() {
       continue; // we've stepped in
 
     if (cur_segment->GetLevel() < start_segment->GetLevel())
-      return true; // we've stepped out, so we stop
-
-    lldb::addr_t cur_address = m_instruction_log[m_insn_position]->GetInsnAddress();
-
-    if (bp_addresses.count(cur_address))
-      return true; // we stopped at a breakpoint
+      break; // we've stepped out, so we stop
 
     if (cur_address < start_address || cur_address > end_address)
-      return true; // we are in a different line range, so we stop
+      break; // we are in a different line range, so we stop
   }
-  return false;
+  return true;
+}
+
+bool ThreadTrace::ReverseStepOver() {
+  return DoStepOver(eDirectionReverse);
 }
 
 bool ThreadTrace::StepOver() {
-  if (m_insn_position == m_instruction_log.size())
-    return false;
-
-  lldb::addr_t load_addresss = m_instruction_log[m_insn_position]->GetInsnAddress();
-  lldb::SBAddress address(load_addresss, m_target);
-  lldb::SBModule module = address.GetModule();
-  lldb::SBSymbolContext sc = module.ResolveSymbolContextForAddress(address, lldb::eSymbolContextLineEntry);
-  lldb::SBLineEntry line_entry = sc.GetLineEntry();
-
-  // We don't have line debug info
-  if (!line_entry.IsValid())
-    return ReverseStepInst(true);
-
-
-  lldb::addr_t start_address = line_entry.GetStartAddress().GetLoadAddress(m_target);
-  lldb::addr_t end_address = line_entry.GetEndAddress().GetLoadAddress(m_target);
-
-  FunctionSegmentSP start_segment = m_instruction_log[m_insn_position]->GetFunctionSegment();
-  std::unordered_set<lldb::addr_t> bp_addresses;
-  GetBreakpointAddresses(bp_addresses);
-
-  while (m_insn_position + 1 < m_instruction_log.size()) {
-    m_insn_position++;
-
-    FunctionSegmentSP cur_segment = m_instruction_log[m_insn_position]->GetFunctionSegment();
-
-    if (cur_segment->GetLevel() > start_segment->GetLevel())
-      continue; // we've stepped in
-
-    if (cur_segment->GetLevel() < start_segment->GetLevel())
-      return true; // we've stepped out, so we stop
-
-    lldb::addr_t cur_address = m_instruction_log[m_insn_position]->GetInsnAddress();
-
-    if (bp_addresses.count(cur_address))
-      return true; // we stopped at a breakpoint
-
-    if (cur_address < start_address || cur_address > end_address)
-      return true; // we are in a different line range, so we stop
-  }
-  return false;
+  return DoStepOver(eDirectionForward);
 }

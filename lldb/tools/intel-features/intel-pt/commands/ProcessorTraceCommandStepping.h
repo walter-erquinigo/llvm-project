@@ -12,6 +12,8 @@ enum PTSteppingKind {
   eStepOver,
   eReverseStepInst,
   eReverseStepOver,
+  eContinue,
+  eReverseContinue,
 };
 
 class ProcessorTraceCommandStepping : public ProcessorTraceCommand {
@@ -21,6 +23,8 @@ public:
 
   bool DoExecute(lldb::SBDebugger debugger, char **command,
                  lldb::SBCommandReturnObject &result) override;
+
+  bool SupportAutoRepeat() override;
 
 private:
   std::shared_ptr<intelpt::PTManager> pt_decoder_sp;
@@ -118,4 +122,49 @@ public:
   const char *GetAlias() { return "ptn"; }
 };
 
+class ProcessorTraceContinue : public ProcessorTraceCommandStepping {
+public:
+  ProcessorTraceContinue(std::shared_ptr<intelpt::PTManager> &pt_decoder)
+      : ProcessorTraceCommandStepping(pt_decoder, eContinue) {}
+
+  const char *GetCommandName() { return "continue"; }
+
+  const char *GetHelp() {
+    return "Move the trace position to the end or until a breakpoint is hit.";
+  }
+
+  const char *GetSyntax() {
+    return "processor-trace continue <cmd-options>\n\n"
+           "\rcmd-options Usage:\n"
+           "\r  processor-trace continue -t [<thread-index>]\n\n"
+           "\t\b-t <thread-index>\n"
+           "\t    thread index of the thread. If no threads are specified, "
+           "the currently selected thread is taken.\n";
+  }
+
+  const char *GetAlias() { return "ptc"; }
+};
+
+class ProcessorTraceReverseContinue : public ProcessorTraceCommandStepping {
+public:
+  ProcessorTraceReverseContinue(std::shared_ptr<intelpt::PTManager> &pt_decoder)
+      : ProcessorTraceCommandStepping(pt_decoder, eReverseContinue) {}
+
+  const char *GetCommandName() { return "reverse-continue"; }
+
+  const char *GetHelp() {
+    return "Move the trace position to the beginning or until a breakpoint is hit.";
+  }
+
+  const char *GetSyntax() {
+    return "processor-trace reverse-continue <cmd-options>\n\n"
+           "\rcmd-options Usage:\n"
+           "\r  processor-trace reverse-continue -t [<thread-index>]\n\n"
+           "\t\b-t <thread-index>\n"
+           "\t    thread index of the thread. If no threads are specified, "
+           "the currently selected thread is taken.\n";
+  }
+
+  const char *GetAlias() { return "ptrc"; }
+};
 #endif // LLDB_TOOLS_INTEL_PT_PROCESSOR_TRACE_STEPPING_H

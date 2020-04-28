@@ -178,6 +178,10 @@ public:
 
   bool StepOver();
 
+  bool Continue();
+
+  bool ReverseContinue();
+
   void SetPtr(intelpt_private::ThreadTrace *ptr);
 
 private:

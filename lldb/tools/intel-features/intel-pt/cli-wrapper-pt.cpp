@@ -48,11 +48,20 @@ bool PTPluginInitialize(lldb::SBDebugger &debugger) {
       new ProcessorTraceStepInst(PTManagerSP),
       new ProcessorTraceReverseStepOver(PTManagerSP),
       new ProcessorTraceStepOver(PTManagerSP),
+      new ProcessorTraceContinue(PTManagerSP),
+      new ProcessorTraceReverseContinue(PTManagerSP)
   };
 
   for (ProcessorTraceCommand *command : commands) {
+    std::ostringstream autoRepeatCommand;
+    if (command->SupportAutoRepeat()) {
+      autoRepeatCommand  << "pt " << command->GetCommandName();
+    }
+
     proc_trace.AddCommand(command->GetCommandName(), command,
-                          command->GetHelp(), command->GetSyntax());
+                          command->GetHelp(), command->GetSyntax(),
+                          command->SupportAutoRepeat() ? autoRepeatCommand.str().c_str() : nullptr);
+
     const char *alias = command->GetAlias();
     if (alias) {
       std::ostringstream oss;

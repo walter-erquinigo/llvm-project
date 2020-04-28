@@ -52,7 +52,7 @@ bool ProcessorTraceShowFunctionCallHistory::DoExecute(
   for (size_t i = 0; i < call_tree.GetSize(); i++) {
     auto segment = call_tree.GetFunctionSegmentAtIndex(i);
     lldb::addr_t load_address = segment.GetStartLoadAddress();
-    printf("[%10zu] %s0x%16.16" PRIx64 ": %s",
+    printf("[%10d] %s0x%16.16" PRIx64 ": %s",
            segment.GetFirstInstruction().GetID(), yellowColor, load_address,
            defaultColor);
     for (int j = 0; j < segment.GetLevel(); j++)
