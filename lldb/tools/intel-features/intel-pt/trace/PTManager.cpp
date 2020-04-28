@@ -157,11 +157,11 @@ void PTThreadTrace::SetPtr(intelpt_private::ThreadTrace *ptr) {
   m_opaque_ptr = ptr;
 }
 
-size_t PTThreadTrace::GetPosition() {
+int PTThreadTrace::GetPosition() {
   return m_opaque_ptr ? m_opaque_ptr->GetPosition() : 0;
 }
 
-void PTThreadTrace::SetPosition(size_t position, lldb::SBError &sberror) {
+void PTThreadTrace::SetPosition(int position, lldb::SBError &sberror) {
   if (m_opaque_ptr != nullptr)
     m_opaque_ptr->SetPosition(position, sberror);
 }
@@ -201,6 +201,14 @@ bool PTThreadTrace::StepIn() {
 
 bool PTThreadTrace::ReverseStepIn() {
   return m_opaque_ptr ? m_opaque_ptr->ReverseStepIn() : false;
+}
+
+bool PTThreadTrace::StepOut() {
+  return m_opaque_ptr ? m_opaque_ptr->StepOut() : false;
+}
+
+bool PTThreadTrace::ReverseStepOut() {
+  return m_opaque_ptr ? m_opaque_ptr->ReverseStepOut() : false;
 }
 
 bool PTThreadTrace::Continue() {

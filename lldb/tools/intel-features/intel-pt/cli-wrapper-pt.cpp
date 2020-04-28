@@ -51,7 +51,9 @@ bool PTPluginInitialize(lldb::SBDebugger &debugger) {
       new ProcessorTraceContinue(PTManagerSP),
       new ProcessorTraceReverseContinue(PTManagerSP),
       new ProcessorTraceStepIn(PTManagerSP),
-      new ProcessorTraceReverseStepIn(PTManagerSP)
+      new ProcessorTraceReverseStepIn(PTManagerSP),
+      new ProcessorTraceStepOut(PTManagerSP),
+      new ProcessorTraceReverseStepOut(PTManagerSP)
   };
 
   for (ProcessorTraceCommand *command : commands) {

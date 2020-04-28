@@ -84,6 +84,12 @@ bool ProcessorTraceCommandStepping::DoExecute(
   case eReverseStepIn:
     did_move = thread_trace.StepIn();
     break;
+  case eStepOut:
+    did_move = thread_trace.StepOut();
+    break;
+  case eReverseStepOut:
+    did_move = thread_trace.ReverseStepOut();
+    break;
   }
 
   if (!did_move) {
@@ -95,9 +101,11 @@ bool ProcessorTraceCommandStepping::DoExecute(
   std::ostringstream source_command;
   source_command << "source list -a "
                  << thread_trace.GetCurrentInstruction().GetInsnAddress();
+  lldb::SBCommandReturnObject source_command_result;
   debugger.GetCommandInterpreter().HandleCommand(source_command.str().c_str(),
-                                                 result);
+                                                 source_command_result);
 
+  result.Printf("[%d]\n%s", thread_trace.GetPosition(), source_command_result.GetOutput());
   result.SetStatus(lldb::eReturnStatusSuccessFinishResult);
   return true;
 }

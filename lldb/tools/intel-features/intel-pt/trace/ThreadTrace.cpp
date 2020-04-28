@@ -54,10 +54,10 @@ void ThreadTrace::SetUniqueTraceInstance(lldb::SBTrace &trace) {
   m_trace = trace;
 }
 
-size_t ThreadTrace::GetPosition() const { return m_insn_position; }
+int ThreadTrace::GetPosition() const { return m_insn_position; }
 
-void ThreadTrace::SetPosition(size_t position, lldb::SBError &sberror) {
-  if (position > m_instruction_log.size()) {
+void ThreadTrace::SetPosition(int position, lldb::SBError &sberror) {
+  if (position > (int)m_instruction_log.size()) {
     sberror.SetErrorString("Position is beyond the trace size");
     return;
   }
@@ -201,6 +201,45 @@ bool ThreadTrace::Continue() {
 
 bool ThreadTrace::ReverseContinue() {
   return DoContinue(eDirectionReverse);
+}
+
+bool ThreadTrace::DoStepOut(Direction direction) {
+  int delta = direction == eDirectionForward ? 1 : -1;
+
+  if (m_insn_position + delta < 0 || m_insn_position + delta >= (int)m_instruction_log.size())
+    return false;
+
+  FunctionSegmentSP start_segment = m_instruction_log[m_insn_position]->GetFunctionSegment();
+
+  std::unordered_set<lldb::addr_t> bp_addresses;
+  GetBreakpointAddresses(bp_addresses);
+
+  while (m_insn_position + delta >= 0 && m_insn_position + delta < (int)m_instruction_log.size()) {
+    m_insn_position += delta;
+
+    lldb::addr_t cur_address = m_instruction_log[m_insn_position]->GetInsnAddress();
+
+    if (bp_addresses.count(cur_address))
+      break; // we stopped at a breakpoint
+
+     FunctionSegmentSP cur_segment = m_instruction_log[m_insn_position]->GetFunctionSegment();
+
+    if (cur_segment->GetLevel() > start_segment->GetLevel())
+      continue; // we stepped-in
+
+    if (cur_segment->GetLevel() < start_segment->GetLevel())
+      break; // we stepped-out
+  }
+
+  return true;
+}
+
+bool ThreadTrace::StepOut() {
+  return ThreadTrace::DoStepOut(eDirectionForward);
+}
+
+bool ThreadTrace::ReverseStepOut() {
+  return ThreadTrace::DoStepOut(eDirectionReverse);
 }
 
 bool ThreadTrace::DoSourceLevelStepping(bool step_over, Direction direction) {

@@ -16,6 +16,8 @@ enum PTSteppingKind {
   eReverseContinue,
   eStepIn,
   eReverseStepIn,
+  eStepOut,
+  eReverseStepOut,
 };
 
 class ProcessorTraceCommandStepping : public ProcessorTraceCommand {
@@ -214,6 +216,52 @@ public:
   }
 
   const char *GetAlias() { return "ptrs"; }
+};
+
+class ProcessorTraceStepOut: public ProcessorTraceCommandStepping {
+public:
+  ProcessorTraceStepOut(std::shared_ptr<intelpt::PTManager> &pt_decoder)
+      : ProcessorTraceCommandStepping(pt_decoder, eStepOut) {}
+
+  const char *GetCommandName() { return "step-out"; }
+
+  const char *GetHelp() {
+    return "Move the trace position to position after the end of the current function";
+  }
+
+  const char *GetSyntax() {
+    return "processor-trace step-out <cmd-options>\n\n"
+           "\rcmd-options Usage:\n"
+           "\r  processor-trace step-out -t [<thread-index>]\n\n"
+           "\t\b-t <thread-index>\n"
+           "\t    thread index of the thread. If no threads are specified, "
+           "the currently selected thread is taken.\n";
+  }
+
+  const char *GetAlias() { return "ptfinish"; }
+};
+
+class ProcessorTraceReverseStepOut: public ProcessorTraceCommandStepping {
+public:
+  ProcessorTraceReverseStepOut(std::shared_ptr<intelpt::PTManager> &pt_decoder)
+      : ProcessorTraceCommandStepping(pt_decoder, eReverseStepOut) {}
+
+  const char *GetCommandName() { return "reverse-step-out"; }
+
+  const char *GetHelp() {
+    return "Move the trace position to position before the beginning of the current function";
+  }
+
+  const char *GetSyntax() {
+    return "processor-trace reverse-step-out <cmd-options>\n\n"
+           "\rcmd-options Usage:\n"
+           "\r  processor-trace reverse-step-out -t [<thread-index>]\n\n"
+           "\t\b-t <thread-index>\n"
+           "\t    thread index of the thread. If no threads are specified, "
+           "the currently selected thread is taken.\n";
+  }
+
+  const char *GetAlias() { return "ptrfinish"; }
 };
 
 #endif // LLDB_TOOLS_INTEL_PT_PROCESSOR_TRACE_STEPPING_H

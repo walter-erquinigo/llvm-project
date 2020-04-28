@@ -67,9 +67,9 @@ public:
 
   void SetUniqueTraceInstance(lldb::SBTrace &trace);
 
-  size_t GetPosition() const;
+  int GetPosition() const;
 
-  void SetPosition(size_t position, lldb::SBError &sberror);
+  void SetPosition(int position, lldb::SBError &sberror);
 
   void GetFrames(std::vector<FrameSP> &frames);
 
@@ -91,6 +91,10 @@ public:
 
   bool ReverseStepIn();
 
+  bool StepOut();
+
+  bool ReverseStepOut();
+
 private:
 
  enum Direction {
@@ -101,6 +105,8 @@ private:
  bool DoStepInst(bool step_over, Direction dir);
 
  bool DoSourceLevelStepping(bool step_over, Direction dir);
+
+ bool DoStepOut(Direction dir);
 
  bool DoContinue(Direction dir);
 

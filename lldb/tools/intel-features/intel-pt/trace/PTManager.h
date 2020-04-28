@@ -162,9 +162,9 @@ public:
                                  PTInstructionList &result_list,
                                  lldb::SBError &sberror);
 
-  size_t GetPosition();
+  int GetPosition();
 
-  void SetPosition(size_t position, lldb::SBError &sberror);
+  void SetPosition(int position, lldb::SBError &sberror);
 
   PTFrameList GetFrames();
 
@@ -185,6 +185,10 @@ public:
   bool StepIn();
 
   bool ReverseStepIn();
+
+  bool StepOut();
+
+  bool ReverseStepOut();
 
   void SetPtr(intelpt_private::ThreadTrace *ptr);
 
