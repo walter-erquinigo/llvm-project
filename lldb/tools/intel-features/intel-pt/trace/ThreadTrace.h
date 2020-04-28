@@ -87,6 +87,10 @@ public:
 
   bool ReverseContinue();
 
+  bool StepIn();
+
+  bool ReverseStepIn();
+
 private:
 
  enum Direction {
@@ -96,7 +100,7 @@ private:
 
  bool DoStepInst(bool step_over, Direction dir);
 
- bool DoStepOver(Direction dir);
+ bool DoSourceLevelStepping(bool step_over, Direction dir);
 
  bool DoContinue(Direction dir);
 

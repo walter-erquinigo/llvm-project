@@ -78,6 +78,12 @@ bool ProcessorTraceCommandStepping::DoExecute(
   case eReverseContinue:
     did_move = thread_trace.ReverseContinue();
     break;
+  case eStepIn:
+    did_move = thread_trace.StepIn();
+    break;
+  case eReverseStepIn:
+    did_move = thread_trace.StepIn();
+    break;
   }
 
   if (!did_move) {

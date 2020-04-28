@@ -14,6 +14,8 @@ enum PTSteppingKind {
   eReverseStepOver,
   eContinue,
   eReverseContinue,
+  eStepIn,
+  eReverseStepIn,
 };
 
 class ProcessorTraceCommandStepping : public ProcessorTraceCommand {
@@ -167,4 +169,51 @@ public:
 
   const char *GetAlias() { return "ptrc"; }
 };
+
+class ProcessorTraceStepIn: public ProcessorTraceCommandStepping {
+public:
+  ProcessorTraceStepIn(std::shared_ptr<intelpt::PTManager> &pt_decoder)
+      : ProcessorTraceCommandStepping(pt_decoder, eStepIn) {}
+
+  const char *GetCommandName() { return "step-in"; }
+
+  const char *GetHelp() {
+    return "Move the trace position to the next source-level position stepping into calls";
+  }
+
+  const char *GetSyntax() {
+    return "processor-trace step-in <cmd-options>\n\n"
+           "\rcmd-options Usage:\n"
+           "\r  processor-trace step-in -t [<thread-index>]\n\n"
+           "\t\b-t <thread-index>\n"
+           "\t    thread index of the thread. If no threads are specified, "
+           "the currently selected thread is taken.\n";
+  }
+
+  const char *GetAlias() { return "pts"; }
+};
+
+class ProcessorTraceReverseStepIn: public ProcessorTraceCommandStepping {
+public:
+  ProcessorTraceReverseStepIn(std::shared_ptr<intelpt::PTManager> &pt_decoder)
+      : ProcessorTraceCommandStepping(pt_decoder, eReverseStepIn) {}
+
+  const char *GetCommandName() { return "reverse-step-in"; }
+
+  const char *GetHelp() {
+    return "Move the trace position to the previous source-level position stepping into calls";
+  }
+
+  const char *GetSyntax() {
+    return "processor-trace step-in <cmd-options>\n\n"
+           "\rcmd-options Usage:\n"
+           "\r  processor-trace step-in -t [<thread-index>]\n\n"
+           "\t\b-t <thread-index>\n"
+           "\t    thread index of the thread. If no threads are specified, "
+           "the currently selected thread is taken.\n";
+  }
+
+  const char *GetAlias() { return "ptrs"; }
+};
+
 #endif // LLDB_TOOLS_INTEL_PT_PROCESSOR_TRACE_STEPPING_H

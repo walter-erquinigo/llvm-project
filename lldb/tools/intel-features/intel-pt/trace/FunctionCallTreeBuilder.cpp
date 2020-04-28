@@ -295,6 +295,10 @@ void FunctionCallTreeBuilder::Finalize(
     std::vector<FunctionSegmentSP> &segments) {
   // correct levels. Each contiguous section should have 0 as minimum level
   for (size_t i = 0; i < segments.size();) {
+    if (segments[i]->IsGap()) {
+      i++;
+      continue;
+    }
     int min_level = segments[i]->GetLevel();
 
     size_t j = i;

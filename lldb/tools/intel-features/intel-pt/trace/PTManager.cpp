@@ -195,6 +195,14 @@ bool PTThreadTrace::StepOver() {
   return m_opaque_ptr ? m_opaque_ptr->StepOver() : false;
 }
 
+bool PTThreadTrace::StepIn() {
+  return m_opaque_ptr ? m_opaque_ptr->StepIn() : false;
+}
+
+bool PTThreadTrace::ReverseStepIn() {
+  return m_opaque_ptr ? m_opaque_ptr->ReverseStepIn() : false;
+}
+
 bool PTThreadTrace::Continue() {
   return m_opaque_ptr ? m_opaque_ptr->Continue() : false;
 }

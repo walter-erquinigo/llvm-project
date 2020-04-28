@@ -203,7 +203,7 @@ bool ThreadTrace::ReverseContinue() {
   return DoContinue(eDirectionReverse);
 }
 
-bool ThreadTrace::DoStepOver(Direction direction) {
+bool ThreadTrace::DoSourceLevelStepping(bool step_over, Direction direction) {
   int delta = direction == eDirectionForward ? 1 : -1;
 
   if (m_insn_position + delta < 0 || m_insn_position + delta >= (int)m_instruction_log.size())
@@ -233,12 +233,17 @@ bool ThreadTrace::DoStepOver(Direction direction) {
     lldb::addr_t cur_address = m_instruction_log[m_insn_position]->GetInsnAddress();
 
     if (bp_addresses.count(cur_address))
-      break;; // we stopped at a breakpoint
+      break; // we stopped at a breakpoint
 
     FunctionSegmentSP cur_segment = m_instruction_log[m_insn_position]->GetFunctionSegment();
 
-    if (cur_segment->GetLevel() > start_segment->GetLevel())
-      continue; // we've stepped in
+    if (cur_segment->GetLevel() > start_segment->GetLevel()) {
+      // we've stepped in
+      if (step_over)
+        continue;
+      else
+        break;
+    }
 
     if (cur_segment->GetLevel() < start_segment->GetLevel())
       break; // we've stepped out, so we stop
@@ -250,9 +255,17 @@ bool ThreadTrace::DoStepOver(Direction direction) {
 }
 
 bool ThreadTrace::ReverseStepOver() {
-  return DoStepOver(eDirectionReverse);
+  return DoSourceLevelStepping(true, eDirectionReverse);
 }
 
 bool ThreadTrace::StepOver() {
-  return DoStepOver(eDirectionForward);
+  return DoSourceLevelStepping(true, eDirectionForward);
+}
+
+bool ThreadTrace::ReverseStepIn() {
+  return DoSourceLevelStepping(false, eDirectionReverse);
+}
+
+bool ThreadTrace::StepIn() {
+  return DoSourceLevelStepping(false, eDirectionForward);
 }

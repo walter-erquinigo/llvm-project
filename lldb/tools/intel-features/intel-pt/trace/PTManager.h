@@ -182,6 +182,10 @@ public:
 
   bool ReverseContinue();
 
+  bool StepIn();
+
+  bool ReverseStepIn();
+
   void SetPtr(intelpt_private::ThreadTrace *ptr);
 
 private:
