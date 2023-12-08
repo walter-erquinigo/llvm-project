@@ -153,7 +153,11 @@ class TestDAP_variables(lldbdap_testcase.DAPTestCaseBase):
         buffer_children = make_buffer_verify_dict(0, 32)
         verify_locals = {
             "argc": {
-                "equals": {"type": "int", "value": "1"},
+                "equals": {
+                    "type": "int",
+                    "value": "1",
+                    "inMemoryValue": "1",
+                },
                 "declaration": {
                     "equals": {"line": 12, "column": 14},
                     "contains": {"path": ["lldb-dap", "variables", "main.cpp"]},
@@ -165,7 +169,14 @@ class TestDAP_variables(lldbdap_testcase.DAPTestCaseBase):
                 "hasVariablesReference": True,
             },
             "pt": {
-                "equals": {"type": "PointType"},
+                "equals": {
+                    "type": "PointType",
+                    **(
+                        {"autoSummary": "{x:11, y:22}"}
+                        if enableAutoVariableSummaries
+                        else {}
+                    ),
+                },
                 "hasVariablesReference": True,
                 "children": {
                     "x": {"equals": {"type": "int", "value": "11"}},
